@@ -18,7 +18,7 @@ import { BlockchainTreeItem } from './BlockchainTreeItem';
 export class PeerTreeItem extends BlockchainTreeItem {
     contextValue = 'blockchain-peer-item';
 
-    constructor(private readonly peerName: any) {
+    constructor(private readonly peerName: string, public readonly command: vscode.Command) {
         super(peerName, vscode.TreeItemCollapsibleState.Collapsed);
     }
 }

@@ -110,6 +110,22 @@ export class FabricClientConnection {
         return instantiatedChaincodes;
     }
 
+    async installChaincode(path: string, peerName: string) {
+
+        // TODO: make this work for all peers
+        const peer: Peer = this.getPeer(peerName);
+
+        process.env.GOPATH = 'Users/Caroline/vsCodeTest/chaincode';
+
+        const installRequest = {
+            targets: [peer],
+            chaincodePath: 'marbles',
+            chaincodeId: 'marbles',
+            chaincodeVersion: '0.0.1'            
+        }
+        await this.client.installChaincode(installRequest);
+    }
+
     private getChannel(channelName: string): Channel {
         console.log('getChannel', channelName);
         return this.client.getChannel(channelName);

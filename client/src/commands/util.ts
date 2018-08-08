@@ -14,6 +14,7 @@
 'use strict';
 import * as vscode from 'vscode';
 import { ParsedCertificate } from '../parsedCertificate';
+import { FabricClientConnection } from '../fabricClientConnection';
 
 export function showConnectionQuickPickBox(prompt: string): Thenable<string | undefined> {
     const connections: Array<any> = vscode.workspace.getConfiguration().get('fabric.connections');
@@ -50,6 +51,21 @@ export function showIdentityConnectionQuickPickBox(prompt: string, connection: a
 
     return vscode.window.showQuickPick(identityNames, quickPickOptions);
 }
+
+
+export function showPeerQuickPickBox(prompt: string, fabricClientConnection: FabricClientConnection): Thenable<string | undefined> {
+   const peerNames: Array<string> = fabricClientConnection.getAllPeerNames();
+
+   // TODO all this to be pick many
+    const quickPickOptions = {
+        ignoreFocusOut: false,
+        canPickMany: false,
+        placeHolder: prompt
+    };
+
+    return vscode.window.showQuickPick(peerNames, quickPickOptions);
+}
+
 
 export function showInputBox(question: string): Thenable<string | undefined> {
     const inputBoxOptions = {

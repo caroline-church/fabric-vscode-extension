@@ -19,6 +19,8 @@ import { addConnection } from './commands/addConnectionCommand';
 import { deleteConnection } from './commands/deleteConnectionCommand';
 import { addConnectionIdentity } from './commands/addConnectionIdentityCommand';
 import { connect } from './commands/connectCommand';
+import { FabricClientConnection } from './fabricClientConnection';
+import { installChaincode } from './commands/installChaincodeCommand';
 
 let blockchainNetworkExplorerProvider;
 
@@ -28,12 +30,13 @@ export function activate(context: vscode.ExtensionContext): void {
     blockchainNetworkExplorerProvider = new BlockchainNetworkExplorerProvider();
 
     vscode.window.registerTreeDataProvider('blockchainExplorer', blockchainNetworkExplorerProvider);
-    vscode.commands.registerCommand('blockchainExplorer.refreshEntry', (connection) => blockchainNetworkExplorerProvider.refresh(connection));
-    vscode.commands.registerCommand('blockchainExplorer.connectEntry', (connection) => connect(connection));
+    vscode.commands.registerCommand('blockchainExplorer.refreshEntry', (connection: any) => blockchainNetworkExplorerProvider.refresh(connection));
+    vscode.commands.registerCommand('blockchainExplorer.connectEntry', (connection: any) => connect(connection));
     vscode.commands.registerCommand('blockchainExplorer.disconnectEntry', () => blockchainNetworkExplorerProvider.disconnect());
     vscode.commands.registerCommand('blockchainExplorer.addConnectionEntry', addConnection);
-    vscode.commands.registerCommand('blockchainExplorer.deleteConnectionEntry', (connection) => deleteConnection(connection));
-    vscode.commands.registerCommand('blockchainExplorer.addConnectionIdentityEntry', (connection) => addConnectionIdentity(connection));
+    vscode.commands.registerCommand('blockchainExplorer.deleteConnectionEntry', (connection: any) => deleteConnection(connection));
+    vscode.commands.registerCommand('blockchainExplorer.addConnectionIdentityEntry', (connection: any ) => addConnectionIdentity(connection));
+    vscode.commands.registerCommand('blockchainExplorer.installChaincodeEntry', (peerName: string, fabricConnection: FabricClientConnection) => installChaincode(peerName, fabricConnection))
     vscode.commands.registerCommand('blockchainExplorer.testEntry', (data) => blockchainNetworkExplorerProvider.test(data));
 
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration((e) => {

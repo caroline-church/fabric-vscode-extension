@@ -161,7 +161,12 @@ export class BlockchainNetworkExplorerProvider implements vscode.TreeDataProvide
         const tree: Array<PeerTreeItem> = [];
 
         peersElement.peers.forEach((peer) => {
-            tree.push(new PeerTreeItem(peer));
+            const command = {
+                command: 'blockchainExplorer.installChaincodeEntry',
+                title: '',
+                arguments: [peer, this.connection]
+            };
+            tree.push(new PeerTreeItem(peer, command));
         });
 
         return Promise.resolve(tree);

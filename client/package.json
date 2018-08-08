@@ -30,7 +30,8 @@
     "onCommand:blockchainExplorer.deleteConnectionEntry",
     "onCommand:blockchainExplorer.addConnectionIdentityEntry",
     "onCommand:blockchainExplorer.connectEntry",
-    "onCommand:blockchainExplorer.disconnectEntry"
+    "onCommand:blockchainExplorer.disconnectEntry",
+    "onCommand:blockchainExplorer.installChaincodeEntry"
   ],
   "main": "./out/src/extension",
   "contributes": {
@@ -106,6 +107,11 @@
         "category": "Blockchain"
       },
       {
+        "command": "blockchainExplorer.installChaincodeEntry",
+        "title": "Install Chaincode",
+        "category": "Blockchain"
+      },
+      {
         "command": "blockchainExplorer.testEntry",
         "title": "Test",
         "category": "Blockchain"
@@ -141,6 +147,10 @@
         {
           "command": "blockchainExplorer.addConnectionIdentityEntry",
           "when": "view == blockchainExplorer && viewItem == blockchain-connection-item"
+        },
+        {
+          "command": "blockchainExplorer.installChaincodeEntry",
+          "when": "view == blockchainExplorer && viewItem == blockchain-peer-item"
         }
       ]
     }

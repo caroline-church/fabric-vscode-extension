@@ -18,7 +18,7 @@ import { showIdentityConnectionQuickPickBox } from './util';
 import { FabricClientConnection } from '../fabricClientConnection';
 import { ParsedCertificate } from '../parsedCertificate';
 
-export async function connect(connection: any): Promise<{} | string | void> {
+export async function connect(connection?: any): Promise<FabricClientConnection | void> {
     console.log('connect');
 
     if (!connection) {
@@ -71,7 +71,8 @@ export async function connect(connection: any): Promise<{} | string | void> {
         const fabricConnection: FabricClientConnection = new FabricClientConnection(connection);
         await fabricConnection.connect();
 
-        return vscode.commands.executeCommand('blockchainExplorer.refreshEntry', fabricConnection);
+        await vscode.commands.executeCommand('blockchainExplorer.refreshEntry', fabricConnection);
+        return fabricConnection;
     } catch (error) {
         vscode.window.showErrorMessage(error.message);
         return Promise.reject(error);

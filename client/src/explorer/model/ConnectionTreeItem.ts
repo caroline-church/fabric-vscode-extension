@@ -18,7 +18,7 @@ import { BlockchainTreeItem } from './BlockchainTreeItem';
 export class ConnectionTreeItem extends BlockchainTreeItem {
     contextValue = 'blockchain-connection-item';
 
-    constructor(public readonly label: string, public readonly connection: any, public readonly collapsableState: vscode.TreeItemCollapsibleState, public readonly command?: vscode.Command) {
+    constructor(public readonly label: string, public readonly connection: any, public readonly collapsableState: vscode.TreeItemCollapsibleState, public readonly command: vscode.Command) {
         super(label, collapsableState);
     }
 }
