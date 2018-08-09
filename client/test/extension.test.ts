@@ -54,7 +54,8 @@ describe('Extension Tests', () => {
             'blockchainExplorer.addConnectionEntry',
             'blockchainExplorer.deleteConnectionEntry',
             'blockchainExplorer.addConnectionIdentityEntry',
-            'blockchainExplorer.testEntry']);
+            'blockchainExplorer.testEntry',
+            'blockchainAPackageExplorer.refreshEntry']);
 
         // Don't need this if createFabricProject is renamed
         const createFabricCommand = allCommands.filter((command) => {

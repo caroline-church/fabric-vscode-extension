@@ -37,7 +37,7 @@ chai.use(sinonChai);
 const should = chai.should();
 
 // tslint:disable no-unused-expression
-describe('BlockchainExplorer', () => {
+describe('BlockchainNetworkExplorer', () => {
 
     describe('getChildren', () => {
 

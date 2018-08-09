@@ -9,10 +9,11 @@ instrumentation:
         - "icon.png"
         - "*.txt"
         - "README.md"
+        - "integrationTest/*"
 
 check:
     global:
-        statements: 91.78
-        branches: 96.15
-        functions: 90.79
-        lines: 95.6
+        statements: 92.29
+        branches: 96.41
+        functions: 91.72
+        lines: 96.01
