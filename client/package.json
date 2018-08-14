@@ -60,6 +60,11 @@
           "type": "array",
           "default": [],
           "description": "Configurations for connecting to a Blockchain network"
+        },
+        "fabric.runtimes": {
+          "type": "array",
+          "default": [],
+          "description": "Configurations for managed Blockchain network runtimes"
         }
       }
     },
