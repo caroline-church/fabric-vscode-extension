@@ -22,4 +22,9 @@ export CXX="g++-4.9" CC="gcc-4.9" DISPLAY=:99.0;
 cd ./client
 
 env
-npm test --verbose
+
+if [ "${TASK}" == "systest" ]; then
+    ./integrationTest/scripts/run-integration-tests.sh
+else
+    npm test
+fi

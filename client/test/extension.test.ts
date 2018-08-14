@@ -23,7 +23,6 @@ chai.should();
 chai.use(sinonChai);
 
 // tslint:disable no-unused-expression
-// Defines a Mocha test suite to group tests of similar kind together
 describe('Extension Tests', () => {
 
     let mySandBox;
@@ -40,7 +39,7 @@ describe('Extension Tests', () => {
     it('should check all the commands are registered', async () => {
 
         // execute a command to force the extension activation
-        await vscode.commands.executeCommand('blockchainExplorer.refreshEntry');
+        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
 
         const allCommands = await vscode.commands.getCommands();
 

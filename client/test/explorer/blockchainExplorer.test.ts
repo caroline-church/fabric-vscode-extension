@@ -333,6 +333,10 @@ describe('BlockchainExplorer', () => {
             let mySandBox;
             let allChildren: Array<BlockchainTreeItem>;
             let blockchainNetworkExplorerProvider: BlockchainNetworkExplorerProvider;
+            let instantiatedChaincodeStub;
+            let getAllPeersStub;
+            let fabricClientConnection;
+            let installedChaincodeStub;
 
             beforeEach(async () => {
                 mySandBox = sinon.createSandbox();
@@ -347,13 +351,15 @@ describe('BlockchainExplorer', () => {
                     privateKeyPath: path.join(rootPath, '../../test/data/connectionOne/credentials/privateKey')
                 };
 
-                const fabricClientConnection: FabricClientConnection = new FabricClientConnection(myConnection);
-                mySandBox.stub(fabricClientConnection, 'getAllPeerNames').resolves(['peerOne', 'peerTwo']);
-                const getAllChannelsForPeerStub = mySandBox.stub(fabricClientConnection, 'getAllChannelsForPeer');
-                getAllChannelsForPeerStub.onFirstCall().resolves(['channelOne', 'channelTwo']);
-                getAllChannelsForPeerStub.onSecondCall().resolves(['channelTwo']);
+                fabricClientConnection = new FabricClientConnection(myConnection);
 
-                const installedChaincodeStub = mySandBox.stub(fabricClientConnection, 'getInstalledChaincode');
+                getAllPeersStub = mySandBox.stub(fabricClientConnection, 'getAllPeerNames').resolves(['peerOne', 'peerTwo']);
+
+                const getAllChannelsForPeerStub = mySandBox.stub(fabricClientConnection, 'getAllChannelsForPeer');
+                getAllChannelsForPeerStub.withArgs('peerOne').resolves(['channelOne', 'channelTwo']);
+                getAllChannelsForPeerStub.withArgs('peerTwo').resolves(['channelTwo']);
+
+                installedChaincodeStub = mySandBox.stub(fabricClientConnection, 'getInstalledChaincode');
 
                 const installedChaincodeMapOne: Map<string, Array<string>> = new Map<string, Array<string>>();
                 installedChaincodeMapOne.set('sample-car-network', ['1.0', '1.2']);
@@ -365,7 +371,7 @@ describe('BlockchainExplorer', () => {
                 installedChaincodeMapTwo.set('biscuit-network', ['0.7']);
                 installedChaincodeStub.withArgs('peerTwo').returns(installedChaincodeMapTwo);
 
-                const instantiatedChaincodeStub = mySandBox.stub(fabricClientConnection, 'getInstantiatedChaincode');
+                instantiatedChaincodeStub = mySandBox.stub(fabricClientConnection, 'getInstantiatedChaincode');
                 instantiatedChaincodeStub.withArgs('channelOne').resolves([{name: 'biscuit-network', version: '0.7'}]);
                 instantiatedChaincodeStub.withArgs('channelTwo').resolves([{name: 'cake-network', version: '0.10'}]);
 
@@ -413,7 +419,7 @@ describe('BlockchainExplorer', () => {
 
                 const instantiatedTreeItemOne: InstantiatedChainCodesTreeItem = channelChildrenOne[1] as InstantiatedChainCodesTreeItem;
                 instantiatedTreeItemOne.collapsibleState.should.equal(vscode.TreeItemCollapsibleState.Collapsed);
-                instantiatedTreeItemOne.channel.should.equal('channelOne');
+                instantiatedTreeItemOne.chaincodes.should.deep.equal([{name: 'biscuit-network', version: '0.7'}]);
                 instantiatedTreeItemOne.contextValue.should.equal('blockchain-instantiated-chaincodes-item');
                 instantiatedTreeItemOne.label.should.equal('Instantiated Chaincodes');
 
@@ -429,9 +435,89 @@ describe('BlockchainExplorer', () => {
 
                 const instantiatedTreeItemTwo: InstantiatedChainCodesTreeItem = channelChildrenTwo[1] as InstantiatedChainCodesTreeItem;
                 instantiatedTreeItemTwo.collapsibleState.should.equal(vscode.TreeItemCollapsibleState.Collapsed);
-                instantiatedTreeItemTwo.channel.should.equal('channelTwo');
+                instantiatedTreeItemTwo.chaincodes.should.deep.equal([{name: 'cake-network', version: '0.10'}]);
                 instantiatedTreeItemTwo.contextValue.should.equal('blockchain-instantiated-chaincodes-item');
                 instantiatedTreeItemTwo.label.should.equal('Instantiated Chaincodes');
+            });
+
+            it('should not create anything if no peers', async () => {
+
+                getAllPeersStub.resolves([]);
+
+                allChildren = await blockchainNetworkExplorerProvider.getChildren();
+
+                allChildren.length.should.equal(0);
+            });
+
+            it('should not create instantiated chaincodes if no chaincodes', async () => {
+
+                instantiatedChaincodeStub.withArgs('channelOne').resolves([]);
+
+                allChildren = await blockchainNetworkExplorerProvider.getChildren();
+
+                allChildren.length.should.equal(2);
+
+                const channelOne: ChannelTreeItem = allChildren[0] as ChannelTreeItem;
+                channelOne.collapsibleState.should.equal(vscode.TreeItemCollapsibleState.Collapsed);
+
+                const channelChildrenOne: Array<BlockchainTreeItem> = await blockchainNetworkExplorerProvider.getChildren(channelOne);
+                channelChildrenOne.length.should.equal(1);
+
+                const peersItemOne: PeersTreeItem = channelChildrenOne[0] as PeersTreeItem;
+                peersItemOne.collapsibleState.should.equal(vscode.TreeItemCollapsibleState.Collapsed);
+                peersItemOne.contextValue.should.equal('blockchain-peers-item');
+                peersItemOne.label.should.equal('Peers');
+                peersItemOne.peers.should.deep.equal(['peerOne']);
+
+                const channelTwo: ChannelTreeItem = allChildren[1] as ChannelTreeItem;
+                const channelChildrenTwo: Array<BlockchainTreeItem> = await blockchainNetworkExplorerProvider.getChildren(channelTwo);
+                channelChildrenTwo.length.should.equal(2);
+
+                const peersItemTwo: PeersTreeItem = channelChildrenTwo[0] as PeersTreeItem;
+                peersItemTwo.collapsibleState.should.equal(vscode.TreeItemCollapsibleState.Collapsed);
+                peersItemTwo.contextValue.should.equal('blockchain-peers-item');
+                peersItemTwo.label.should.equal('Peers');
+                peersItemTwo.peers.should.deep.equal(['peerOne', 'peerTwo']);
+
+                const instantiatedTreeItemTwo: InstantiatedChainCodesTreeItem = channelChildrenTwo[1] as InstantiatedChainCodesTreeItem;
+                instantiatedTreeItemTwo.collapsibleState.should.equal(vscode.TreeItemCollapsibleState.Collapsed);
+                instantiatedTreeItemTwo.chaincodes.should.deep.equal([{name: 'cake-network', version: '0.10'}]);
+                instantiatedTreeItemTwo.contextValue.should.equal('blockchain-instantiated-chaincodes-item');
+                instantiatedTreeItemTwo.label.should.equal('Instantiated Chaincodes');
+            });
+
+            it('should error if problem with instatiate chaincodes', async () => {
+
+                instantiatedChaincodeStub.withArgs('channelOne').rejects({message: 'some error'});
+
+                const errorSpy = mySandBox.spy(vscode.window, 'showErrorMessage');
+
+                allChildren = await blockchainNetworkExplorerProvider.getChildren();
+
+                errorSpy.should.have.been.calledWith('Error getting instantiated chaincode for channel channelOne some error');
+
+                allChildren.length.should.equal(2);
+
+                const channelOne: ChannelTreeItem = allChildren[0] as ChannelTreeItem;
+
+                const channelChildrenOne: Array<BlockchainTreeItem> = await blockchainNetworkExplorerProvider.getChildren(channelOne);
+                channelChildrenOne.length.should.equal(1);
+
+                const peersItemOne: PeersTreeItem = channelChildrenOne[0] as PeersTreeItem;
+                peersItemOne.collapsibleState.should.equal(vscode.TreeItemCollapsibleState.Collapsed);
+                peersItemOne.contextValue.should.equal('blockchain-peers-item');
+                peersItemOne.label.should.equal('Peers');
+                peersItemOne.peers.should.deep.equal(['peerOne']);
+
+                const channelTwo: ChannelTreeItem = allChildren[1] as ChannelTreeItem;
+                const channelChildrenTwo: Array<BlockchainTreeItem> = await blockchainNetworkExplorerProvider.getChildren(channelTwo);
+                channelChildrenTwo.length.should.equal(2);
+
+                const peersItemTwo: PeersTreeItem = channelChildrenTwo[0] as PeersTreeItem;
+                peersItemTwo.collapsibleState.should.equal(vscode.TreeItemCollapsibleState.Collapsed);
+                peersItemTwo.contextValue.should.equal('blockchain-peers-item');
+                peersItemTwo.label.should.equal('Peers');
+                peersItemTwo.peers.should.deep.equal(['peerOne', 'peerTwo']);
             });
 
             it('should create the peers correctly', async () => {
@@ -490,6 +576,68 @@ describe('BlockchainExplorer', () => {
                 chaincodeItems[1].collapsibleState.should.equal(vscode.TreeItemCollapsibleState.Collapsed);
                 chaincodeItems[1].contextValue.should.equal('blockchain-installed-chaincode-item');
                 chaincodeItems[1].label.should.equal('sample-food-network');
+
+                const chaincodeItemsTwo: Array<ChainCodeTreeItem> = await blockchainNetworkExplorerProvider.getChildren(peerItems[1]) as Array<ChainCodeTreeItem>;
+
+                chaincodeItemsTwo.length.should.equal(1);
+                chaincodeItemsTwo[0].collapsibleState.should.equal(vscode.TreeItemCollapsibleState.Collapsed);
+                chaincodeItemsTwo[0].contextValue.should.equal('blockchain-installed-chaincode-item');
+                chaincodeItemsTwo[0].label.should.equal('biscuit-network');
+            });
+
+            it('should handle no installed chaincodes', async () => {
+
+                installedChaincodeStub.withArgs('peerOne').resolves(new Map<string, Array<string>>());
+
+                allChildren = await blockchainNetworkExplorerProvider.getChildren();
+
+                const channelTwo: ChannelTreeItem = allChildren[1] as ChannelTreeItem;
+
+                const channelChildrenTwo: Array<BlockchainTreeItem> = await blockchainNetworkExplorerProvider.getChildren(channelTwo);
+                channelChildrenTwo.length.should.equal(2);
+
+                const peersItemOne: PeersTreeItem = channelChildrenTwo[0] as PeersTreeItem;
+
+                const peerItems: Array<PeerTreeItem> = await blockchainNetworkExplorerProvider.getChildren(peersItemOne) as Array<PeerTreeItem>;
+
+                peerItems[0].collapsibleState.should.equal(vscode.TreeItemCollapsibleState.None);
+
+                const chaincodeItems: Array<InstalledChainCodeTreeItem> = await blockchainNetworkExplorerProvider.getChildren(peerItems[0]) as Array<InstalledChainCodeTreeItem>;
+
+                chaincodeItems.length.should.equal(0);
+
+                const chaincodeItemsTwo: Array<ChainCodeTreeItem> = await blockchainNetworkExplorerProvider.getChildren(peerItems[1]) as Array<ChainCodeTreeItem>;
+
+                chaincodeItemsTwo.length.should.equal(1);
+                chaincodeItemsTwo[0].collapsibleState.should.equal(vscode.TreeItemCollapsibleState.Collapsed);
+                chaincodeItemsTwo[0].contextValue.should.equal('blockchain-installed-chaincode-item');
+                chaincodeItemsTwo[0].label.should.equal('biscuit-network');
+            });
+
+            it('should handle errror getting installed chaincodes', async () => {
+
+                installedChaincodeStub.withArgs('peerOne').rejects({message: 'some error'});
+
+                const errorSpy = mySandBox.spy(vscode.window, 'showErrorMessage');
+
+                allChildren = await blockchainNetworkExplorerProvider.getChildren();
+
+                const channelTwo: ChannelTreeItem = allChildren[1] as ChannelTreeItem;
+
+                const channelChildrenTwo: Array<BlockchainTreeItem> = await blockchainNetworkExplorerProvider.getChildren(channelTwo);
+                channelChildrenTwo.length.should.equal(2);
+
+                const peersItemOne: PeersTreeItem = channelChildrenTwo[0] as PeersTreeItem;
+
+                const peerItems: Array<PeerTreeItem> = await blockchainNetworkExplorerProvider.getChildren(peersItemOne) as Array<PeerTreeItem>;
+
+                peerItems[0].collapsibleState.should.equal(vscode.TreeItemCollapsibleState.None);
+
+                errorSpy.should.have.been.calledWith('Error when getting installed chaincodes for peer peerOne some error');
+
+                const chaincodeItems: Array<InstalledChainCodeTreeItem> = await blockchainNetworkExplorerProvider.getChildren(peerItems[0]) as Array<InstalledChainCodeTreeItem>;
+
+                chaincodeItems.length.should.equal(0);
 
                 const chaincodeItemsTwo: Array<ChainCodeTreeItem> = await blockchainNetworkExplorerProvider.getChildren(peerItems[1]) as Array<ChainCodeTreeItem>;
 
