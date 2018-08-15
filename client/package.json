@@ -60,6 +60,11 @@
           "type": "array",
           "default": [],
           "description": "Configurations for connecting to a Blockchain network"
+        },
+        "fabric.runtimes": {
+          "type": "array",
+          "default": [],
+          "description": "Configurations for managed Blockchain network runtimes"
         }
       }
     },
@@ -153,10 +158,10 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "compile": "rimraf out && tsc -p ./",
+    "watch": "rimraf out && tsc -watch -p ./",
     "postinstall": "node ./node_modules/vscode/bin/install",
-    "pretest": "npm run lint & npm run licchk",
+    "pretest": "npm run compile && npm run lint && npm run licchk",
     "test": "node ./node_modules/vscode/bin/test --verbose",
     "posttest": "node ./node_modules/.bin/istanbul check-coverage",
     "systest": "node ./node_modules/vscode/bin/test --verbose",
@@ -170,8 +175,10 @@
     "@types/glob": "5.0.35",
     "@types/mocha": "5.2.5",
     "@types/node": "10.5.4",
+    "@types/rimraf": "^2.0.2",
     "@types/sinon": "5.0.1",
     "@types/sinon-chai": "3.2.0",
+    "@types/tmp": "0.0.33",
     "angular-tslint-rules": "1.5.0",
     "chai": "4.1.2",
     "chai-as-promised": "7.1.1",
@@ -185,8 +192,10 @@
     "mocha": "5.2.0",
     "nyc": "^12.0.2",
     "remap-istanbul": "0.11.1",
+    "rimraf": "^2.6.2",
     "sinon": "6.1.4",
     "sinon-chai": "3.2.0",
+    "tmp": "0.0.33",
     "ts-node": "7.0.0",
     "tslint": "5.11.0",
     "tslint-loader": "3.6.0",
