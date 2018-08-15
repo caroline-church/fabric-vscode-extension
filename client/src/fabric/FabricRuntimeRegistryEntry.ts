@@ -18,4 +18,9 @@ export class FabricRuntimeRegistryEntry extends BaseFabricRegistryEntry {
 
     public developmentMode: boolean;
 
+    constructor(fields?: FabricRuntimeRegistryEntry) {
+        super();
+        Object.assign(this, fields);
+    }
+
 }

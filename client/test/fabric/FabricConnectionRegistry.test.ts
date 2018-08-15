@@ -34,7 +34,7 @@ describe('FabricConnectionRegistry', () => {
     });
 
     it('should manage configuration for connections', async () => {
-        const connection: FabricConnectionRegistryEntry = {
+        const connection: FabricConnectionRegistryEntry = new FabricConnectionRegistryEntry({
             name: 'my-fabric-network',
             connectionProfilePath: '/tmp/connection.json',
             identities: [
@@ -44,7 +44,7 @@ describe('FabricConnectionRegistry', () => {
                 }
             ],
             managedRuntime: false
-        };
+        });
         registry.getAll().should.deep.equal([]);
         await registry.add(connection);
         registry.getAll().should.deep.equal([connection]);

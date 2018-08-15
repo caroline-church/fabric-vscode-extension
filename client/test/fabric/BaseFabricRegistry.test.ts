@@ -47,9 +47,7 @@ describe('BaseFabricRegistry', () => {
         await vscode.workspace.getConfiguration().update(testFabricRegistryName, [], vscode.ConfigurationTarget.Global);
     });
 
-    beforeEach(async () => {
-        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-        registry = new TestFabricRegistry();
+    afterEach(async () => {
         await vscode.workspace.getConfiguration().update(testFabricRegistryName, [], vscode.ConfigurationTarget.Global);
     });
 

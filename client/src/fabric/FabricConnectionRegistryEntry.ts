@@ -22,4 +22,9 @@ export class FabricConnectionRegistryEntry extends BaseFabricRegistryEntry {
 
     public managedRuntime: boolean;
 
+    constructor(fields?: FabricConnectionRegistryEntry) {
+        super();
+        Object.assign(this, fields);
+    }
+
 }

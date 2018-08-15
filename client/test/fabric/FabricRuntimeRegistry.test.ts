@@ -34,10 +34,10 @@ describe('FabricRuntimeRegistry', () => {
     });
 
     it('should manage configurations for runtimes', async () => {
-        const runtime: FabricRuntimeRegistryEntry = {
+        const runtime: FabricRuntimeRegistryEntry = new FabricRuntimeRegistryEntry({
             name: 'my-fabric-runtime',
             developmentMode: true
-        };
+        });
         registry.getAll().should.deep.equal([]);
         await registry.add(runtime);
         registry.getAll().should.deep.equal([runtime]);

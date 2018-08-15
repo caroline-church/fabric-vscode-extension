@@ -16,31 +16,42 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as chai from 'chai';
 import * as sinon from 'sinon';
+import * as tmp from 'tmp';
 import * as sinonChai from 'sinon-chai';
 import { Util } from '../../src/commands/util';
 chai.use(sinonChai);
 import * as fs from 'fs';
 
 // Defines a Mocha test suite to group tests of similar kind together
+// tslint:disable no-unused-expression
 describe('CreateFabricProjectCommand', () => {
     // suite variables
-    let mySandBox;
-    let sendCommandStub;
-    let errorSpy;
-    let quickPickStub;
-    let openDialogStub;
-    let rootPath;
+    let mySandBox: sinon.SinonSandbox;
+    let sendCommandStub: sinon.SinonStub;
+    let errorSpy: sinon.SinonSpy;
+    let quickPickStub: sinon.SinonStub;
+    let openDialogStub: sinon.SinonStub;
+    let executeCommandStub: sinon.SinonStub;
     let uri: vscode.Uri;
     let uriArr: Array<vscode.Uri>;
 
-    beforeEach(() => {
+    beforeEach(async () => {
+        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
         mySandBox = sinon.createSandbox();
         sendCommandStub = mySandBox.stub(Util, 'sendCommand');
         errorSpy = mySandBox.spy(vscode.window, 'showErrorMessage');
         quickPickStub = mySandBox.stub(vscode.window, 'showQuickPick');
         openDialogStub = mySandBox.stub(vscode.window, 'showOpenDialog');
-        rootPath = path.dirname(__dirname);
-        uri = vscode.Uri.file(path.join(rootPath, '../../test/data/fabricProject') );
+        const originalExecuteCommand = vscode.commands.executeCommand;
+        executeCommandStub = mySandBox.stub(vscode.commands, 'executeCommand');
+        executeCommandStub.callsFake(async function fakeExecuteCommand(command: string) {
+            // Don't open the folder as this causes lots of windows to pop up, and random
+            // test failures.
+            if (command !== 'vscode.openFolder') {
+                return originalExecuteCommand.apply(this, arguments);
+            }
+        });
+        uri = vscode.Uri.file(tmp.dirSync().name);
         uriArr = [uri];
     });
     afterEach(() => {
@@ -49,8 +60,8 @@ describe('CreateFabricProjectCommand', () => {
 
     // Define assertion
     it('should start a fabric project', async () => {
-        mySandBox.restore();
-        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
+        // We actually want to execute the command!
+        sendCommandStub.restore();
         try {
             fs.mkdirSync(uri.fsPath);
         } catch (error) {
@@ -58,19 +69,18 @@ describe('CreateFabricProjectCommand', () => {
                 throw new error('failed to create test directory:' + uri.fsPath);
             }
         }
-        openDialogStub = mySandBox.stub(vscode.window, 'showOpenDialog');
         openDialogStub.resolves(uriArr);
 
         await vscode.commands.executeCommand('createFabricProjectEntry');
         // check package.json has been created
-        const pathToCheck = path.join(rootPath, '../../test/data/fabricProject/package.json');
+        const pathToCheck = path.join(uri.fsPath, 'package.json');
         chai.assert(fs.existsSync(pathToCheck), 'No package.json found, looking here:' + pathToCheck);
+        executeCommandStub.should.have.been.calledTwice;
+        executeCommandStub.should.have.been.calledWith('vscode.openFolder', uriArr[0], true);
 
     }).timeout(20000);
 
     it('should show error if npm is not installed', async () => {
-        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
         // npm not installed
         sendCommandStub.onCall(0).rejects();
         await vscode.commands.executeCommand('createFabricProjectEntry');
@@ -78,8 +88,6 @@ describe('CreateFabricProjectCommand', () => {
     });
 
     it('should show error is yo is not installed and not wanted', async () => {
-        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
         // yo not installed and not wanted
         sendCommandStub.onCall(0).rejects({message : 'npm ERR'});
         quickPickStub.resolves('no');
@@ -88,8 +96,6 @@ describe('CreateFabricProjectCommand', () => {
     });
 
     it('should show error message if generator-fabric fails to install', async () => {
-        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
         // generator-fabric not installed and wanted but fails to install
         sendCommandStub.onCall(0).resolves();
         sendCommandStub.onCall(1).rejects();
@@ -101,8 +107,6 @@ describe('CreateFabricProjectCommand', () => {
     });
 
     it('should show error message if yo fails to install', async () => {
-        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
         // yo not installed and wanted but fails to install
         sendCommandStub.onCall(0).rejects({message : 'npm ERR'});
         quickPickStub.resolves('yes');
