@@ -20,14 +20,16 @@ set -o pipefail
 cd ./client
 npm install
 
-node ./node_modules/.bin/electron-rebuild -v 1.7
+node ./node_modules/.bin/electron-rebuild -v 2.0
 
 ls ./node_modules/grpc/src/node/extension_binary
 
 if [ $TRAVIS_OS_NAME == "linux" ]; then
-    mv ./node_modules/grpc/src/node/extension_binary/electron-v1.7-linux-x64-glibc ./node_modules/grpc/src/node/extension_binary/node-v54-linux-x64-glibc
+    rm -rf ./node_modules/grpc/src/node/extension_binary/node-v57-linux-x64-glibc
+    mv ./node_modules/grpc/src/node/extension_binary/electron-v2.0-linux-x64-glibc ./node_modules/grpc/src/node/extension_binary/node-v57-linux-x64-glibc
 else
-    mv ./node_modules/grpc/src/node/extension_binary/electron-v1.7-darwin-x64-unknown ./node_modules/grpc/src/node/extension_binary/node-v54-darwin-x64-unknown
+    rm -rf ./node_modules/grpc/src/node/extension_binary/node-v57-darwin-x64-unknown
+    mv ./node_modules/grpc/src/node/extension_binary/electron-v2.0-darwin-x64-unknown ./node_modules/grpc/src/node/extension_binary/node-v57-darwin-x64-unknown
 fi
 
 npm run compile

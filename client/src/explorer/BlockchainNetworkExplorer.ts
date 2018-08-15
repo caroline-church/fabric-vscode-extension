@@ -84,8 +84,12 @@ export class BlockchainNetworkExplorerProvider implements vscode.TreeDataProvide
                 if (element instanceof ChannelTreeItem) {
                     this.tree = [];
                     const channelElement: ChannelTreeItem = element as ChannelTreeItem;
+
                     this.tree.push(new PeersTreeItem('Peers', channelElement.peers));
-                    this.tree.push(new InstantiatedChainCodesTreeItem('Instantiated Chaincodes', element.label));
+
+                    if (channelElement.chaincodes.length > 0) {
+                        this.tree.push(new InstantiatedChainCodesTreeItem('Instantiated Chaincodes', element.chaincodes));
+                    }
                 }
 
                 if (element instanceof PeersTreeItem) {
@@ -135,8 +139,7 @@ export class BlockchainNetworkExplorerProvider implements vscode.TreeDataProvide
         console.log('createInstalledChaincodeTree', peerElement);
         const tree: Array<InstalledChainCodeTreeItem> = [];
 
-        const installedChainCodes: Map<string, Array<string>> = await this.connection.getInstalledChaincode(peerElement.label);
-        installedChainCodes.forEach((versions, name) => {
+        peerElement.chaincodes.forEach((versions, name) => {
             tree.push(new InstalledChainCodeTreeItem(name, versions));
         });
 
@@ -147,24 +150,29 @@ export class BlockchainNetworkExplorerProvider implements vscode.TreeDataProvide
         console.log('createInstantiatedChaincodeTree', instantiatedChainCodesElement);
         const tree: Array<ChainCodeTreeItem> = [];
 
-        const instantiatedChaincodes: Array<any> = await this.connection.getInstantiatedChaincode(instantiatedChainCodesElement.channel);
-
-        instantiatedChaincodes.forEach((instantiatedChaincode) => {
+        instantiatedChainCodesElement.chaincodes.forEach((instantiatedChaincode) => {
             tree.push(new ChainCodeTreeItem(instantiatedChaincode.name + ' - ' + instantiatedChaincode.version));
         });
 
         return tree;
     }
 
-    private createPeerTree(peersElement: PeersTreeItem): Promise<Array<PeerTreeItem>> {
+    private async createPeerTree(peersElement: PeersTreeItem): Promise<Array<PeerTreeItem>> {
         console.log('createPeerTree', peersElement);
         const tree: Array<PeerTreeItem> = [];
 
-        peersElement.peers.forEach((peer) => {
-            tree.push(new PeerTreeItem(peer));
-        });
+        for (const peer of peersElement.peers) {
+            try {
+                const chaincodes: Map<string, Array<string>> = await this.connection.getInstalledChaincode(peer);
+                const collapsibleState = chaincodes.size > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None;
+                tree.push(new PeerTreeItem(peer, chaincodes, collapsibleState));
+            } catch (error) {
+                tree.push(new PeerTreeItem(peer, new Map<string, Array<string>>(), vscode.TreeItemCollapsibleState.None));
+                vscode.window.showErrorMessage('Error when getting installed chaincodes for peer ' + peer + ' ' + error.message);
+            }
+        }
 
-        return Promise.resolve(tree);
+        return tree;
     }
 
     private async createConnectedTree(): Promise<Array<ChannelTreeItem>> {
@@ -173,9 +181,19 @@ export class BlockchainNetworkExplorerProvider implements vscode.TreeDataProvide
 
         const channelMap: Map<string, Array<string>> = await this.createChannelMap();
 
-        channelMap.forEach((peers, channel) => {
-            tree.push(new ChannelTreeItem(channel, peers));
-        });
+        const channels: Array<string> = Array.from(channelMap.keys());
+
+        for (const channel of channels) {
+            let chaincodes: Array<string>;
+            const peers: Array<string> = channelMap.get(channel);
+            try {
+                chaincodes = await this.connection.getInstantiatedChaincode(channel);
+                tree.push(new ChannelTreeItem(channel, peers, chaincodes, vscode.TreeItemCollapsibleState.Collapsed));
+            } catch (error) {
+                tree.push(new ChannelTreeItem(channel, peers, [], vscode.TreeItemCollapsibleState.Collapsed));
+                vscode.window.showErrorMessage('Error getting instantiated chaincode for channel ' + channel + ' ' + error.message);
+            }
+        }
 
         return tree;
     }

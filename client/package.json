@@ -14,7 +14,7 @@
   "publisher": "hyperledger",
   "icon": "icon.png",
   "engines": {
-    "vscode": "^1.19.2"
+    "vscode": "^1.26.0"
   },
   "repository": {
     "type": "git",
@@ -159,6 +159,7 @@
     "pretest": "npm run lint & npm run licchk",
     "test": "node ./node_modules/vscode/bin/test --verbose",
     "posttest": "node ./node_modules/.bin/istanbul check-coverage",
+    "systest": "node ./node_modules/vscode/bin/test --verbose",
     "licchk": "license-check-and-add",
     "tslint": "tslint",
     "lint": "npm run tslint 'src/**/*.ts' 'test/**/*.test.ts'"
@@ -175,7 +176,7 @@
     "chai": "4.1.2",
     "chai-as-promised": "7.1.1",
     "decache": "4.4.0",
-    "electron": "1.7.12",
+    "electron": "2.0.7",
     "electron-rebuild": "1.8.2",
     "generator-fabric": "^0.0.2",
     "glob": "7.1.2",
@@ -191,7 +192,7 @@
     "tslint-loader": "3.6.0",
     "typescript": "3.0.1",
     "vsce": "1.44.0",
-    "vscode": "1.1.18",
+    "vscode": "1.1.21",
     "yo": "^2.0.5"
   },
   "dependencies": {
@@ -200,7 +201,7 @@
     "fabric-ca-client": "1.2.1",
     "fabric-client": "1.2.1",
     "fs-extra": "7.0.0",
-    "vscode-languageclient": "4.4.0"
+    "vscode-languageclient": "4.4.1"
   },
   "license-check-and-add-config": {
     "folder": ".",
@@ -214,13 +215,27 @@
       "resources",
       "test/data",
       ".DS_Store",
-      "test/.DS_Store"
+      "config/.DS_Store",
+      "test/.DS_Store",
+      "integrationTest/data"
     ],
     "file_type_method": "EXCLUDE",
     "file_types": [
       ".txt",
       ".vsix",
-      ".yml"
+      ".yml",
+      ".yml",
+      ".yaml",
+      ".tgz",
+      ".key",
+      ".gz",
+      ".pem",
+      ".crt",
+      ".tx",
+      ".block",
+      ".log",
+      ".pid",
+      ".port"
     ],
     "insert_license": false,
     "clear_license": false,

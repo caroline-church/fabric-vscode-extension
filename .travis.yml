@@ -2,6 +2,11 @@ sudo: false
 os:
   - linux
 
+matrix:
+    include:
+        - env: TASK=systest
+        - env: TASK=unit
+
 before_install:
      - if [ $TRAVIS_OS_NAME == "linux" ]; then
          sudo add-apt-repository ppa:ubuntu-toolchain-r/test

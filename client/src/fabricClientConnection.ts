@@ -78,7 +78,7 @@ export class FabricClientConnection {
             channelNames.push(channel.channel_id);
         });
 
-        return channelNames;
+        return channelNames.sort();
     }
 
     async getInstalledChaincode(peerName: string): Promise<Map<string, Array<string>>> {

@@ -18,7 +18,7 @@ import * as vscode from 'vscode';
 export class InstantiatedChainCodesTreeItem extends BlockchainTreeItem {
     contextValue = 'blockchain-instantiated-chaincodes-item';
 
-    constructor(public readonly label: string, public readonly channel: string) {
+    constructor(public readonly label: string, public readonly chaincodes: Array<any>) {
         super(label, vscode.TreeItemCollapsibleState.Collapsed);
     }
 }

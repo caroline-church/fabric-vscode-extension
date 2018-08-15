@@ -11,14 +11,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
-'use strict';
-import * as vscode from 'vscode';
-import { BlockchainTreeItem } from './BlockchainTreeItem';
 
-export class PeerTreeItem extends BlockchainTreeItem {
-    contextValue = 'blockchain-peer-item';
+// tslint:disable no-var-requires
+const testRunner = require('vscode/lib/testrunner');
 
-    constructor(private readonly peerName: any, public readonly chaincodes: Map<string, Array<string>>, collapsibleState: vscode.TreeItemCollapsibleState) {
-        super(peerName, collapsibleState);
-    }
-}
+testRunner.configure({
+    ui: 'bdd',
+    useColors: true
+});
+
+module.exports = testRunner;
