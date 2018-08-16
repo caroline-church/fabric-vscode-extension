@@ -16,15 +16,16 @@ import * as vscode from 'vscode';
 import { Util } from './util';
 import { FabricClientConnection } from '../fabricClientConnection';
 import { ParsedCertificate } from '../parsedCertificate';
+import { getBlockchainNetworkExplorerProvider } from '../extension';
 
-export async function connect(connection: any): Promise<{} | string | void> {
+export async function connect(connection: any): Promise<void> {
     console.log('connect');
 
     if (!connection) {
         const connectionName: string = await Util.showConnectionQuickPickBox('Choose a connection to connect with');
 
         if (!connectionName) {
-            return Promise.resolve();
+            return;
         }
 
         const connections: Array<any> = vscode.workspace.getConfiguration().get('fabric.connections');
@@ -34,7 +35,7 @@ export async function connect(connection: any): Promise<{} | string | void> {
 
         if (!connectionConfig) {
             vscode.window.showErrorMessage('Could not connect as no connection found');
-            return Promise.resolve();
+            return;
         }
 
         connection = {
@@ -45,7 +46,7 @@ export async function connect(connection: any): Promise<{} | string | void> {
             const identityName = await Util.showIdentityConnectionQuickPickBox('Choose an identity to connect with', connectionConfig);
 
             if (!identityName) {
-                return Promise.resolve();
+                return;
             }
 
             const foundIdentity = connectionConfig.identities.find(((identity) => {
@@ -55,7 +56,7 @@ export async function connect(connection: any): Promise<{} | string | void> {
 
             if (!foundIdentity) {
                 vscode.window.showErrorMessage('Could not connect as no identity found');
-                return Promise.resolve();
+                return;
             }
 
             connection.certificatePath = foundIdentity.certificatePath;
@@ -70,9 +71,10 @@ export async function connect(connection: any): Promise<{} | string | void> {
         const fabricConnection: FabricClientConnection = new FabricClientConnection(connection);
         await fabricConnection.connect();
 
-        return vscode.commands.executeCommand('blockchainExplorer.refreshEntry', fabricConnection);
+        const blockchainNetworkExplorerProvider = getBlockchainNetworkExplorerProvider();
+        await blockchainNetworkExplorerProvider.connect(fabricConnection);
     } catch (error) {
         vscode.window.showErrorMessage(error.message);
-        return Promise.reject(error);
+        throw error;
     }
 }

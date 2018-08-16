@@ -43,14 +43,17 @@ export class BlockchainNetworkExplorerProvider implements vscode.TreeDataProvide
 
     private connection: FabricClientConnection = null;
 
-    async refresh(connection?: FabricClientConnection): Promise<void> {
-        console.log('refresh', connection);
-        if (connection) {
-            this.connection = connection;
-            // This controls which menu buttons appear
-            await vscode.commands.executeCommand('setContext', 'blockchain-connected', true);
-        }
-        this._onDidChangeTreeData.fire();
+    async refresh(element?: BlockchainTreeItem): Promise<void> {
+        console.log('refresh', element);
+        this._onDidChangeTreeData.fire(element);
+    }
+
+    async connect(connection: FabricClientConnection): Promise<void> {
+        console.log('connect', connection);
+        this.connection = connection;
+        // This controls which menu buttons appear
+        await vscode.commands.executeCommand('setContext', 'blockchain-connected', true);
+        await this.refresh();
     }
 
     async disconnect(): Promise<void> {
@@ -58,7 +61,7 @@ export class BlockchainNetworkExplorerProvider implements vscode.TreeDataProvide
         this.connection = null;
         // This controls which menu buttons appear
         await vscode.commands.executeCommand('setContext', 'blockchain-connected', false);
-        return this.refresh();
+        await this.refresh();
     }
 
     test(data): Promise<void> {

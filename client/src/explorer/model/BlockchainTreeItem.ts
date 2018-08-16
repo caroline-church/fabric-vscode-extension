@@ -14,6 +14,7 @@
 'use strict';
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { getBlockchainNetworkExplorerProvider } from '../../extension';
 
 export abstract class BlockchainTreeItem extends vscode.TreeItem {
     // TODO: update the icons
@@ -29,5 +30,9 @@ export abstract class BlockchainTreeItem extends vscode.TreeItem {
 
     get tooltip(): string {
         return `${this.label}`;
+    }
+
+    refresh(): void {
+        getBlockchainNetworkExplorerProvider().refresh(this);
     }
 }
