@@ -20,7 +20,7 @@ import { addConnection } from './commands/addConnectionCommand';
 import { deleteConnection } from './commands/deleteConnectionCommand';
 import { addConnectionIdentity } from './commands/addConnectionIdentityCommand';
 import { connect } from './commands/connectCommand';
-import { createFabricProject } from './commands/createFabricProjectCommand';
+import { createSmartContractProject } from './commands/createSmartContractProjectCommand';
 
 import { VSCodeOutputAdapter } from './logging/VSCodeOutputAdapter';
 
@@ -43,7 +43,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand('blockchainExplorer.addConnectionEntry', addConnection);
     vscode.commands.registerCommand('blockchainExplorer.deleteConnectionEntry', (connection) => deleteConnection(connection));
     vscode.commands.registerCommand('blockchainExplorer.addConnectionIdentityEntry', (connection) => addConnectionIdentity(connection));
-    vscode.commands.registerCommand('blockchain.createFabricProjectEntry', createFabricProject);
+    vscode.commands.registerCommand('blockchain.createSmartContractProjectEntry', createSmartContractProject);
     vscode.commands.registerCommand('blockchainAPackageExplorer.refreshEntry', () => blockchainPackageExplorerProvider.refresh());
 
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration((e) => {
