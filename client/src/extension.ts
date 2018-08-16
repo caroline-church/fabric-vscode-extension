@@ -15,6 +15,7 @@
 
 import * as vscode from 'vscode';
 import { BlockchainNetworkExplorerProvider } from './explorer/BlockchainNetworkExplorer';
+import { BlockchainPackageExplorerProvider } from './explorer/BlockchainPackageExplorer';
 import { addConnection } from './commands/addConnectionCommand';
 import { deleteConnection } from './commands/deleteConnectionCommand';
 import { addConnectionIdentity } from './commands/addConnectionIdentityCommand';
@@ -22,13 +23,16 @@ import { connect } from './commands/connectCommand';
 import { createFabricProject } from './commands/createFabricProjectCommand';
 
 let blockchainNetworkExplorerProvider;
+let blockchainPackageExplorerProvider;
 
 export function activate(context: vscode.ExtensionContext): void {
     console.log('CLIENT activate!!!');
 
     blockchainNetworkExplorerProvider = new BlockchainNetworkExplorerProvider();
+    blockchainPackageExplorerProvider = new BlockchainPackageExplorerProvider();
 
     vscode.window.registerTreeDataProvider('blockchainExplorer', blockchainNetworkExplorerProvider);
+    vscode.window.registerTreeDataProvider('blockchainAPackageExplorer', blockchainPackageExplorerProvider);
     vscode.commands.registerCommand('blockchainExplorer.refreshEntry', (connection) => blockchainNetworkExplorerProvider.refresh(connection));
     vscode.commands.registerCommand('blockchainExplorer.connectEntry', (connection) => connect(connection));
     vscode.commands.registerCommand('blockchainExplorer.disconnectEntry', () => blockchainNetworkExplorerProvider.disconnect());
@@ -37,6 +41,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('blockchainExplorer.addConnectionIdentityEntry', (connection) => addConnectionIdentity(connection));
     vscode.commands.registerCommand('blockchainExplorer.testEntry', (data) => blockchainNetworkExplorerProvider.test(data));
     vscode.commands.registerCommand('createFabricProjectEntry', createFabricProject);
+    vscode.commands.registerCommand('blockchainAPackageExplorer.refreshEntry', () => blockchainPackageExplorerProvider.refresh());
 
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration((e) => {
 
@@ -51,4 +56,7 @@ export function activate(context: vscode.ExtensionContext): void {
  */
 export function getBlockchainNetworkExplorerProvider(): BlockchainNetworkExplorerProvider {
     return blockchainNetworkExplorerProvider;
+}
+export function getBlockchainPackageExplorerProvider(): BlockchainPackageExplorerProvider {
+    return blockchainPackageExplorerProvider;
 }

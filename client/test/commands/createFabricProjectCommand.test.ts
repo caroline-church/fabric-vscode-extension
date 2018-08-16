@@ -21,6 +21,9 @@ import * as sinonChai from 'sinon-chai';
 import { Util } from '../../src/commands/util';
 chai.use(sinonChai);
 import * as fs from 'fs';
+import * as util from 'util';
+const mkdir = util.promisify(fs.mkdir);
+const exists = util.promisify(fs.exists);
 
 // Defines a Mocha test suite to group tests of similar kind together
 // tslint:disable no-unused-expression
@@ -63,7 +66,7 @@ describe('CreateFabricProjectCommand', () => {
         // We actually want to execute the command!
         sendCommandStub.restore();
         try {
-            fs.mkdirSync(uri.fsPath);
+            await mkdir(uri.fsPath);
         } catch (error) {
             if (!error.message.includes('file already exists') ) {
                 throw new error('failed to create test directory:' + uri.fsPath);
@@ -74,7 +77,7 @@ describe('CreateFabricProjectCommand', () => {
         await vscode.commands.executeCommand('createFabricProjectEntry');
         // check package.json has been created
         const pathToCheck = path.join(uri.fsPath, 'package.json');
-        chai.assert(fs.existsSync(pathToCheck), 'No package.json found, looking here:' + pathToCheck);
+        chai.assert(exists(pathToCheck), 'No package.json found, looking here:' + pathToCheck);
         executeCommandStub.should.have.been.calledTwice;
         executeCommandStub.should.have.been.calledWith('vscode.openFolder', uriArr[0], true);
 

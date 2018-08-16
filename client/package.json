@@ -47,6 +47,10 @@
     "views": {
       "blockchain-explorer": [
         {
+          "id": "blockchainAPackageExplorer",
+          "name": "Smart Contract Packages"
+        },
+        {
           "id": "blockchainExplorer",
           "name": "Fabric Explorer"
         }
@@ -65,6 +69,11 @@
           "type": "array",
           "default": [],
           "description": "Configurations for managed Blockchain network runtimes"
+        },
+        "fabric.package.directory": {
+          "type": "string",
+          "default": "~/.fabric-vscode/packages",
+          "description": "Configurations for smart contract packages"
         }
       }
     },
@@ -120,6 +129,24 @@
         "command": "blockchainExplorer.testEntry",
         "title": "Test",
         "category": "Blockchain"
+      },
+      {
+        "command": "blockchainAPackageExplorer.refreshEntry",
+        "title": "Refresh Smart Contract Packages",
+        "icon": {
+          "light": "resources/light/refresh.svg",
+          "dark": "resources/dark/refresh.svg"
+        },
+        "category": "Blockchain"
+      },
+      {
+        "command": "blockchainAPackageExplorer.packageSmartContractProject",
+        "title": "Add Smart Contract Package",
+        "icon": {
+          "light": "resources/light/add.svg",
+          "dark": "resources/dark/add.svg"
+        },
+        "category": "Blockchain"
       }
     ],
     "menus": {
@@ -137,6 +164,16 @@
         {
           "command": "blockchainExplorer.refreshEntry",
           "when": "view == blockchainExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "blockchainAPackageExplorer.refreshEntry",
+          "when": "view == blockchainAPackageExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "blockchainAPackageExplorer.packageSmartContractProject",
+          "when": "view == blockchainAPackageExplorer",
           "group": "navigation"
         }
       ],
