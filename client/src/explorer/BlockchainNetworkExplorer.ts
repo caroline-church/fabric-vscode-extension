@@ -16,7 +16,7 @@
 'use strict';
 import * as vscode from 'vscode';
 
-import { FabricClientConnection } from '../fabricClientConnection';
+import { FabricConnection } from '../fabric/FabricConnection';
 import { GenerateTests } from './generateTests';
 import { ParsedCertificate } from '../parsedCertificate';
 
@@ -43,10 +43,10 @@ export class BlockchainNetworkExplorerProvider implements BlockchainExplorerProv
     // tslint:disable-next-line member-ordering
     readonly onDidChangeTreeData: vscode.Event<any | undefined> = this._onDidChangeTreeData.event;
 
-    private connection: FabricClientConnection = null;
+    private connection: FabricConnection = null;
 
     constructor() {
-        FabricConnectionManager.instance().on('connected', async (connection: FabricClientConnection) => {
+        FabricConnectionManager.instance().on('connected', async (connection: FabricConnection) => {
             try {
                 await this.connect(connection);
             } catch (error) {
@@ -67,7 +67,7 @@ export class BlockchainNetworkExplorerProvider implements BlockchainExplorerProv
         this._onDidChangeTreeData.fire(element);
     }
 
-    async connect(connection: FabricClientConnection): Promise<void> {
+    async connect(connection: FabricConnection): Promise<void> {
         console.log('connect', connection);
         this.connection = connection;
         // This controls which menu buttons appear

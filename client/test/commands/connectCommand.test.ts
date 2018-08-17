@@ -17,7 +17,7 @@ import * as path from 'path';
 
 import * as myExtension from '../../src/extension';
 import * as fabricClient from 'fabric-client';
-import { FabricClientConnection } from '../../src/fabricClientConnection';
+import { FabricClientConnection } from '../../src/fabric/FabricClientConnection';
 
 import * as chai from 'chai';
 import * as sinon from 'sinon';

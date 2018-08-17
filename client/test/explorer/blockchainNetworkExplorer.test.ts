@@ -22,7 +22,7 @@ import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { ConnectionIdentityTreeItem } from '../../src/explorer/model/ConnectionIdentityTreeItem';
 import { AddConnectionTreeItem } from '../../src/explorer/model/AddConnectionTreeItem';
-import { FabricClientConnection } from '../../src/fabricClientConnection';
+import { FabricConnection } from '../../src/fabric/FabricConnection';
 import { BlockchainTreeItem } from '../../src/explorer/model/BlockchainTreeItem';
 import { BlockchainNetworkExplorerProvider } from '../../src/explorer/BlockchainNetworkExplorer';
 import { ChannelTreeItem } from '../../src/explorer/model/ChannelTreeItem';
@@ -36,6 +36,14 @@ import { FabricConnectionManager } from '../../src/fabric/FabricConnectionManage
 
 chai.use(sinonChai);
 const should = chai.should();
+
+class TestFabricConnection extends FabricConnection {
+
+    async connect(): Promise<void> {
+        return;
+    }
+
+}
 
 // tslint:disable no-unused-expression
 describe('BlockchainNetworkExplorer', () => {
@@ -57,7 +65,7 @@ describe('BlockchainNetworkExplorer', () => {
             const blockchainNetworkExplorerProvider: BlockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
             mySandBox.stub(blockchainNetworkExplorerProvider, 'connect').resolves();
             mySandBox.stub(blockchainNetworkExplorerProvider, 'disconnect').resolves();
-            const mockConnection: sinon.SinonStubbedInstance<FabricClientConnection> = sinon.createStubInstance(FabricClientConnection);
+            const mockConnection: sinon.SinonStubbedInstance<TestFabricConnection> = sinon.createStubInstance(TestFabricConnection);
             const connectionManager: FabricConnectionManager = FabricConnectionManager.instance();
             connectionManager.emit('connected', mockConnection);
             blockchainNetworkExplorerProvider.connect.should.have.been.calledOnceWithExactly(mockConnection);
@@ -366,53 +374,38 @@ describe('BlockchainNetworkExplorer', () => {
 
         describe('connected tree', () => {
 
-            let mySandBox;
+            let mySandBox: sinon.SinonSandbox;
             let allChildren: Array<BlockchainTreeItem>;
             let blockchainNetworkExplorerProvider: BlockchainNetworkExplorerProvider;
-            let instantiatedChaincodeStub;
-            let getAllPeersStub;
-            let fabricClientConnection;
-            let installedChaincodeStub;
+            let fabricConnection: sinon.SinonStubbedInstance<FabricConnection>;
 
             beforeEach(async () => {
                 mySandBox = sinon.createSandbox();
 
                 await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
 
-                const rootPath = path.dirname(__dirname);
+                fabricConnection = sinon.createStubInstance(TestFabricConnection);
 
-                const myConnection = {
-                    connectionProfilePath: path.join(rootPath, '../../test/data/connectionOne/connection.json'),
-                    certificatePath: path.join(rootPath, '../../test/data/connectionOne/credentials/certificate'),
-                    privateKeyPath: path.join(rootPath, '../../test/data/connectionOne/credentials/privateKey')
-                };
+                fabricConnection.getAllPeerNames.resolves(['peerOne', 'peerTwo']);
 
-                fabricClientConnection = new FabricClientConnection(myConnection);
-
-                getAllPeersStub = mySandBox.stub(fabricClientConnection, 'getAllPeerNames').resolves(['peerOne', 'peerTwo']);
-
-                const getAllChannelsForPeerStub = mySandBox.stub(fabricClientConnection, 'getAllChannelsForPeer');
-                getAllChannelsForPeerStub.withArgs('peerOne').resolves(['channelOne', 'channelTwo']);
-                getAllChannelsForPeerStub.withArgs('peerTwo').resolves(['channelTwo']);
-
-                installedChaincodeStub = mySandBox.stub(fabricClientConnection, 'getInstalledChaincode');
+                fabricConnection.getAllChannelsForPeer.withArgs('peerOne').resolves(['channelOne', 'channelTwo']);
+                fabricConnection.getAllChannelsForPeer.withArgs('peerTwo').resolves(['channelTwo']);
 
                 const installedChaincodeMapOne: Map<string, Array<string>> = new Map<string, Array<string>>();
                 installedChaincodeMapOne.set('sample-car-network', ['1.0', '1.2']);
                 installedChaincodeMapOne.set('sample-food-network', ['0.6']);
 
-                installedChaincodeStub.withArgs('peerOne').returns(installedChaincodeMapOne);
+                fabricConnection.getInstalledChaincode.withArgs('peerOne').returns(installedChaincodeMapOne);
 
                 const installedChaincodeMapTwo: Map<string, Array<string>> = new Map<string, Array<string>>();
                 installedChaincodeMapTwo.set('biscuit-network', ['0.7']);
-                installedChaincodeStub.withArgs('peerTwo').returns(installedChaincodeMapTwo);
+                fabricConnection.getInstalledChaincode.withArgs('peerTwo').returns(installedChaincodeMapTwo);
 
-                instantiatedChaincodeStub = mySandBox.stub(fabricClientConnection, 'getInstantiatedChaincode');
-                instantiatedChaincodeStub.withArgs('channelOne').resolves([{name: 'biscuit-network', version: '0.7'}]);
-                instantiatedChaincodeStub.withArgs('channelTwo').resolves([{name: 'cake-network', version: '0.10'}]);
+                fabricConnection.getInstantiatedChaincode.withArgs('channelOne').resolves([{name: 'biscuit-network', version: '0.7'}]);
+                fabricConnection.getInstantiatedChaincode.withArgs('channelTwo').resolves([{name: 'cake-network', version: '0.10'}]);
 
                 blockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
-                blockchainNetworkExplorerProvider['connection'] = fabricClientConnection;
+                blockchainNetworkExplorerProvider['connection'] = ((fabricConnection as any) as FabricConnection);
 
                 allChildren = await blockchainNetworkExplorerProvider.getChildren();
             });
@@ -478,7 +471,7 @@ describe('BlockchainNetworkExplorer', () => {
 
             it('should not create anything if no peers', async () => {
 
-                getAllPeersStub.resolves([]);
+                fabricConnection.getAllPeerNames.resolves([]);
 
                 allChildren = await blockchainNetworkExplorerProvider.getChildren();
 
@@ -487,7 +480,7 @@ describe('BlockchainNetworkExplorer', () => {
 
             it('should not create instantiated chaincodes if no chaincodes', async () => {
 
-                instantiatedChaincodeStub.withArgs('channelOne').resolves([]);
+                fabricConnection.getInstantiatedChaincode.withArgs('channelOne').resolves([]);
 
                 allChildren = await blockchainNetworkExplorerProvider.getChildren();
 
@@ -524,7 +517,7 @@ describe('BlockchainNetworkExplorer', () => {
 
             it('should error if problem with instatiate chaincodes', async () => {
 
-                instantiatedChaincodeStub.withArgs('channelOne').rejects({message: 'some error'});
+                fabricConnection.getInstantiatedChaincode.withArgs('channelOne').rejects({message: 'some error'});
 
                 const errorSpy = mySandBox.spy(vscode.window, 'showErrorMessage');
 
@@ -623,7 +616,7 @@ describe('BlockchainNetworkExplorer', () => {
 
             it('should handle no installed chaincodes', async () => {
 
-                installedChaincodeStub.withArgs('peerOne').resolves(new Map<string, Array<string>>());
+                fabricConnection.getInstalledChaincode.withArgs('peerOne').resolves(new Map<string, Array<string>>());
 
                 allChildren = await blockchainNetworkExplorerProvider.getChildren();
 
@@ -652,7 +645,7 @@ describe('BlockchainNetworkExplorer', () => {
 
             it('should handle errror getting installed chaincodes', async () => {
 
-                installedChaincodeStub.withArgs('peerOne').rejects({message: 'some error'});
+                fabricConnection.getInstalledChaincode.withArgs('peerOne').rejects({message: 'some error'});
 
                 const errorSpy = mySandBox.spy(vscode.window, 'showErrorMessage');
 
@@ -791,7 +784,7 @@ describe('BlockchainNetworkExplorer', () => {
 
     describe('connect', () => {
 
-        let mySandBox;
+        let mySandBox: sinon.SinonSandbox;
 
         beforeEach(() => {
             mySandBox = sinon.createSandbox();
@@ -809,23 +802,15 @@ describe('BlockchainNetworkExplorer', () => {
 
             const onDidChangeTreeDataSpy = mySandBox.spy(blockchainNetworkExplorerProvider['_onDidChangeTreeData'], 'fire');
 
-            const rootPath = path.dirname(__dirname);
-
-            const myConnection = {
-                connectionProfilePath: path.join(rootPath, '../../test/data/connectionOne/connection.json'),
-                certificatePath: path.join(rootPath, '../../test/data/connectionOne/credentials/certificate'),
-                privateKeyPath: path.join(rootPath, '../../test/data/connectionOne/credentials/privateKey')
-            };
-
-            const myClientConnection = new FabricClientConnection(myConnection);
+            const myConnection = new TestFabricConnection();
 
             const executeCommandSpy = mySandBox.spy(vscode.commands, 'executeCommand');
 
-            await blockchainNetworkExplorerProvider.connect(myClientConnection);
+            await blockchainNetworkExplorerProvider.connect(myConnection);
 
             onDidChangeTreeDataSpy.should.have.been.called;
 
-            blockchainNetworkExplorerProvider['connection'].should.deep.equal(myClientConnection);
+            blockchainNetworkExplorerProvider['connection'].should.deep.equal(myConnection);
 
             executeCommandSpy.should.have.been.calledOnce;
             executeCommandSpy.getCall(0).should.have.been.calledWith('setContext', 'blockchain-connected', true);
@@ -845,18 +830,10 @@ describe('BlockchainNetworkExplorer', () => {
         });
 
         it('should disconnect the client connection', async () => {
-            const rootPath = path.dirname(__dirname);
-
-            const myConnection = {
-                connectionProfilePath: path.join(rootPath, '../../test/data/connectionOne/connection.json'),
-                certificatePath: path.join(rootPath, '../../test/data/connectionOne/credentials/certificate'),
-                privateKeyPath: path.join(rootPath, '../../test/data/connectionOne/credentials/privateKey')
-            };
-
-            const myClientConnection = new FabricClientConnection(myConnection);
+            const myConnection = new TestFabricConnection();
 
             const blockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
-            blockchainNetworkExplorerProvider['connection'] = myClientConnection;
+            blockchainNetworkExplorerProvider['connection'] = myConnection;
 
             const onDidChangeTreeDataSpy = mySandBox.spy(blockchainNetworkExplorerProvider['_onDidChangeTreeData'], 'fire');
 
