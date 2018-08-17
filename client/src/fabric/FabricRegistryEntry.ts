@@ -12,7 +12,7 @@
  * limitations under the License.
 */
 
-export abstract class BaseFabricRegistryEntry {
+export abstract class FabricRegistryEntry {
 
     public name: string;
 

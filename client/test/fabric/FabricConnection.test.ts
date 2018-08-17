@@ -12,54 +12,45 @@
  * limitations under the License.
 */
 
-import * as path from 'path';
+import { FabricConnection } from '../../src/fabric/FabricConnection';
 
 import * as chai from 'chai';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
-import { FabricClientConnection } from '../src/fabricClientConnection';
 import * as fabricClient from 'fabric-client';
 
 chai.should();
 chai.use(sinonChai);
 
 // tslint:disable no-unused-expression
-describe('FabricClientConnection', () => {
+describe('FabricConnection', () => {
 
-    let fabricClientStub;
-    let fabricClientConnection;
+    class TestFabricConnection extends FabricConnection {
 
-    let mySandBox;
+        async connect(): Promise<void> {
+            this.client = fabricClientStub;
+        }
 
-    afterEach(() => {
-        mySandBox.restore();
-    });
+    }
+
+    let fabricClientStub: sinon.SinonStubbedInstance<fabricClient>;
+    let fabricConnection: TestFabricConnection;
+
+    let mySandBox: sinon.SinonSandbox;
 
     beforeEach(async () => {
         mySandBox = sinon.createSandbox();
 
-        const rootPath = path.dirname(__dirname);
-
-        const connectionData = {
-            connectionProfilePath: path.join(rootPath, '../test/data/connectionOne/connection.json'),
-            certificatePath: path.join(rootPath, '../test/data/connectionOne/credentials/certificate'),
-            privateKeyPath: path.join(rootPath, '../test/data/connectionOne/credentials/privateKey')
-        };
-
-        fabricClientConnection = new FabricClientConnection(connectionData);
+        fabricConnection = new TestFabricConnection();
+        await fabricConnection.connect();
 
         fabricClientStub = mySandBox.createStubInstance(fabricClient);
-
-        mySandBox.stub(fabricClient, 'loadFromConfig').resolves(fabricClientStub);
 
         fabricClientStub.getMspid.returns('myMSPId');
     });
 
-    describe('connect', () => {
-        it('should connect to a fabric', async () => {
-            await fabricClientConnection.connect();
-            fabricClientStub.setAdminSigningIdentity.should.have.been.calledWith(sinon.match.string, sinon.match.string, 'myMSPId');
-        });
+    afterEach(() => {
+        mySandBox.restore();
     });
 
     describe('getAllPeerNames', () => {
@@ -69,9 +60,9 @@ describe('FabricClientConnection', () => {
 
             fabricClientStub.getPeersForOrg.returns([peerOne, peerTwo]);
 
-            await fabricClientConnection.connect();
+            await fabricConnection.connect();
 
-            const peerNames: Array<string> = await fabricClientConnection.getAllPeerNames();
+            const peerNames: Array<string> = await fabricConnection.getAllPeerNames();
             peerNames.should.deep.equal(['peerOne', 'peerTwo']);
         });
     });
@@ -83,9 +74,9 @@ describe('FabricClientConnection', () => {
 
             fabricClientStub.getPeersForOrg.returns([peerOne, peerTwo]);
 
-            await fabricClientConnection.connect();
+            await fabricConnection.connect();
 
-            const peer: fabricClient.Peer = await fabricClientConnection.getPeer('peerTwo');
+            const peer: fabricClient.Peer = await fabricConnection.getPeer('peerTwo');
             peer.getName().should.deep.equal('peerTwo');
         });
     });
@@ -100,9 +91,9 @@ describe('FabricClientConnection', () => {
             const channelTwo = {channel_id: 'channel-two'};
             fabricClientStub.queryChannels.resolves({channels: [channelOne, channelTwo]});
 
-            await fabricClientConnection.connect();
+            await fabricConnection.connect();
 
-            const channelNames: Array<string> = await fabricClientConnection.getAllChannelsForPeer('peerTwo');
+            const channelNames: Array<string> = await fabricConnection.getAllChannelsForPeer('peerTwo');
 
             channelNames.should.deep.equal(['channel-one', 'channel-two']);
         });
@@ -122,8 +113,8 @@ describe('FabricClientConnection', () => {
                 }, {name: 'biscuit-network', version: '0.8'}, {name: 'cake-network', version: '0.8'}]
             });
 
-            await fabricClientConnection.connect();
-            const installedChaincode: Map<string, Array<string>> = await fabricClientConnection.getInstalledChaincode('peerOne');
+            await fabricConnection.connect();
+            const installedChaincode: Map<string, Array<string>> = await fabricConnection.getInstalledChaincode('peerOne');
             installedChaincode.size.should.equal(2);
             Array.from(installedChaincode.keys()).should.deep.equal(['biscuit-network', 'cake-network']);
             installedChaincode.get('biscuit-network').should.deep.equal(['0.7', '0.8']);
@@ -141,8 +132,8 @@ describe('FabricClientConnection', () => {
 
             fabricClientStub.getChannel.returns(channelOne);
 
-            await fabricClientConnection.connect();
-            const instantiatedChainodes: Array<any> = await fabricClientConnection.getInstantiatedChaincode('channel-one');
+            await fabricConnection.connect();
+            const instantiatedChainodes: Array<any> = await fabricConnection.getInstantiatedChaincode('channel-one');
 
             instantiatedChainodes.should.deep.equal([{name: 'biscuit-network', version: '0,7'}, {
                 name: 'cake-network',

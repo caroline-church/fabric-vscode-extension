@@ -13,9 +13,9 @@
 */
 
 import { FabricRuntimeRegistryEntry } from './FabricRuntimeRegistryEntry';
-import { BaseFabricRegistry } from './BaseFabricRegistry';
+import { FabricRegistry } from './FabricRegistry';
 
-export class FabricRuntimeRegistry extends BaseFabricRegistry<FabricRuntimeRegistryEntry> {
+export class FabricRuntimeRegistry extends FabricRegistry<FabricRuntimeRegistryEntry> {
 
     public static instance() {
         return FabricRuntimeRegistry._instance;

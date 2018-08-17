@@ -16,33 +16,13 @@ import {
     loadFromConfig, ChannelQueryResponse, ChaincodeQueryResponse,
     Peer, Channel
 } from 'fabric-client';
-import * as fs from 'fs';
+import * as Client from 'fabric-client';
 
-const ENCODING = 'utf8';
+export abstract class FabricConnection {
 
-export class FabricClientConnection {
+    protected client: Client;
 
-    private connectionProfilePath: string;
-    private certificatePath: string;
-    private privateKeyPath: string;
-    private client: any;
-
-    constructor(connectionData) {
-        this.connectionProfilePath = connectionData.connectionProfilePath;
-        this.certificatePath = connectionData.certificatePath;
-        this.privateKeyPath = connectionData.privateKeyPath;
-    }
-
-    async connect(): Promise<void> {
-        console.log('connect');
-        this.client = await loadFromConfig(this.connectionProfilePath);
-        const mspid: string = this.client.getMspid();
-        const certString: string = this.loadFileFromDisk(this.certificatePath);
-        const privateKeyString: string = this.loadFileFromDisk(this.privateKeyPath);
-        // TODO: probably need to use a store rather than this as not every config will be an admin
-        this.client.setAdminSigningIdentity(privateKeyString, certString, mspid);
-
-    }
+    abstract async connect(): Promise<void>;
 
     getAllPeerNames(): Array<string> {
         console.log('getAllPeerNames');
@@ -110,6 +90,12 @@ export class FabricClientConnection {
         return instantiatedChaincodes;
     }
 
+    protected async connectInner(connectionProfile: object, certificate: string, privateKey: string): Promise<void> {
+        this.client = await loadFromConfig(connectionProfile);
+        const mspid: string = this.client.getMspid();
+        this.client.setAdminSigningIdentity(privateKey, certificate, mspid);
+    }
+
     private getChannel(channelName: string): Channel {
         console.log('getChannel', channelName);
         return this.client.getChannel(channelName);
@@ -120,8 +106,4 @@ export class FabricClientConnection {
         return this.client.getPeersForOrg(null);
     }
 
-    private loadFileFromDisk(path: string): string {
-        console.log('loadFileFromDisk', path);
-        return fs.readFileSync(path, ENCODING) as string;
-    }
 }

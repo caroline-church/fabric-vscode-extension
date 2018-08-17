@@ -14,7 +14,7 @@
 'use strict';
 import * as vscode from 'vscode';
 import { Util } from './util';
-import { FabricClientConnection } from '../fabricClientConnection';
+import { FabricClientConnection } from '../fabric/FabricClientConnection';
 import { ParsedCertificate } from '../parsedCertificate';
 import { getBlockchainNetworkExplorerProvider } from '../extension';
 import { FabricConnectionManager } from '../fabric/FabricConnectionManager';

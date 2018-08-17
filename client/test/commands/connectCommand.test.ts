@@ -17,7 +17,7 @@ import * as path from 'path';
 
 import * as myExtension from '../../src/extension';
 import * as fabricClient from 'fabric-client';
-import { FabricClientConnection } from '../../src/fabricClientConnection';
+import { FabricClientConnection } from '../../src/fabric/FabricClientConnection';
 
 import * as chai from 'chai';
 import * as sinon from 'sinon';
@@ -288,13 +288,15 @@ describe('ConnectCommand', () => {
             const blockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
             const allChildren: Array<BlockchainTreeItem> = await blockchainNetworkExplorerProvider.getChildren();
 
-            const myConnectionItem: ConnectionTreeItem = allChildren[0] as ConnectionTreeItem;
-
             const errorMessageSpy = mySandBox.spy(vscode.window, 'showErrorMessage');
 
             const loadFromConfigStub = mySandBox.stub(fabricClient, 'loadFromConfig').rejects({message: 'some error'});
 
-            await vscode.commands.executeCommand('blockchainExplorer.connectEntry', myConnectionItem.connection).should.be.rejected;
+            const quickPickStub = mySandBox.stub(vscode.window, 'showQuickPick');
+            quickPickStub.onFirstCall().resolves('myConnection');
+            quickPickStub.onSecondCall().resolves('Admin@org1.example.com');
+
+            await vscode.commands.executeCommand('blockchainExplorer.connectEntry').should.be.rejected;
 
             loadFromConfigStub.should.have.been.called;
 

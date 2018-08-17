@@ -13,25 +13,25 @@
 */
 
 import * as vscode from 'vscode';
-import { BaseFabricRegistry } from '../../src/fabric/BaseFabricRegistry';
-import { BaseFabricRegistryEntry } from '../../src/fabric/BaseFabricRegistryEntry';
+import { FabricRegistry } from '../../src/fabric/FabricRegistry';
+import { FabricRegistryEntry } from '../../src/fabric/FabricRegistryEntry';
 
 import * as chai from 'chai';
 
 chai.should();
 
 // tslint:disable no-unused-expression
-describe('BaseFabricRegistry', () => {
+describe('FabricRegistry', () => {
 
     const testFabricRegistryName: string = 'fabric.runtimes';
 
     // tslint:disable max-classes-per-file
-    class TestFabricRegistryEntry extends BaseFabricRegistryEntry {
+    class TestFabricRegistryEntry extends FabricRegistryEntry {
         public myValue: string;
     }
 
     // tslint:disable max-classes-per-file
-    class TestFabricRegistry extends BaseFabricRegistry<TestFabricRegistryEntry> {
+    class TestFabricRegistry extends FabricRegistry<TestFabricRegistryEntry> {
 
         constructor() {
             super(testFabricRegistryName);

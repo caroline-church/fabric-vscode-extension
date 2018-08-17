@@ -12,7 +12,7 @@
  * limitations under the License.
 */
 
-import { FabricClientConnection } from '../fabricClientConnection';
+import { FabricConnection } from '../fabric/FabricConnection';
 import { EventEmitter } from 'events';
 
 export class FabricConnectionManager extends EventEmitter {
@@ -23,17 +23,17 @@ export class FabricConnectionManager extends EventEmitter {
 
     private static _instance: FabricConnectionManager = new FabricConnectionManager();
 
-    private connection: FabricClientConnection;
+    private connection: FabricConnection;
 
     private constructor() {
         super();
     }
 
-    public getConnection(): FabricClientConnection {
+    public getConnection(): FabricConnection {
         return this.connection;
     }
 
-    public connect(connection: FabricClientConnection) {
+    public connect(connection: FabricConnection) {
         this.connection = connection;
         this.emit('connected', connection);
     }

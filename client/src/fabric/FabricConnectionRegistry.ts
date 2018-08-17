@@ -13,9 +13,9 @@
 */
 
 import { FabricConnectionRegistryEntry } from './FabricConnectionRegistryEntry';
-import { BaseFabricRegistry } from './BaseFabricRegistry';
+import { FabricRegistry } from './FabricRegistry';
 
-export class FabricConnectionRegistry extends BaseFabricRegistry<FabricConnectionRegistryEntry> {
+export class FabricConnectionRegistry extends FabricRegistry<FabricConnectionRegistryEntry> {
 
     public static instance() {
         return FabricConnectionRegistry._instance;

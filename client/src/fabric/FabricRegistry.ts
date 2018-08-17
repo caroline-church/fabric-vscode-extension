@@ -13,9 +13,9 @@
 */
 
 import * as vscode from 'vscode';
-import { BaseFabricRegistryEntry } from './BaseFabricRegistryEntry';
+import { FabricRegistryEntry } from './FabricRegistryEntry';
 
-export abstract class BaseFabricRegistry<T extends BaseFabricRegistryEntry> {
+export abstract class FabricRegistry<T extends FabricRegistryEntry> {
 
     protected constructor(private registryName: string) {
 
