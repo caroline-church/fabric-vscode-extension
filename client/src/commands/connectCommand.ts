@@ -17,6 +17,7 @@ import { Util } from './util';
 import { FabricClientConnection } from '../fabricClientConnection';
 import { ParsedCertificate } from '../parsedCertificate';
 import { getBlockchainNetworkExplorerProvider } from '../extension';
+import { FabricConnectionManager } from '../fabric/FabricConnectionManager';
 
 export async function connect(connection: any): Promise<void> {
     console.log('connect');
@@ -70,9 +71,7 @@ export async function connect(connection: any): Promise<void> {
     try {
         const fabricConnection: FabricClientConnection = new FabricClientConnection(connection);
         await fabricConnection.connect();
-
-        const blockchainNetworkExplorerProvider = getBlockchainNetworkExplorerProvider();
-        await blockchainNetworkExplorerProvider.connect(fabricConnection);
+        FabricConnectionManager.instance().connect(fabricConnection);
     } catch (error) {
         vscode.window.showErrorMessage(error.message);
         throw error;

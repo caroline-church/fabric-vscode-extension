@@ -26,7 +26,7 @@ describe('BlockchainTreeItem', () => {
     class TestBlockchainTreeItem extends BlockchainTreeItem {
 
         constructor() {
-            super('test label', vscode.TreeItemCollapsibleState.None);
+            super(getBlockchainNetworkExplorerProvider(), 'test label', vscode.TreeItemCollapsibleState.None);
         }
 
     }

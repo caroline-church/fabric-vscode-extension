@@ -32,12 +32,48 @@ import { PeerTreeItem } from '../../src/explorer/model/PeerTreeItem';
 import { ChainCodeTreeItem } from '../../src/explorer/model/ChainCodeTreeItem';
 import { InstalledChainCodeTreeItem } from '../../src/explorer/model/InstalledChainCodeTreeItem';
 import { InstalledChainCodeVersionTreeItem } from '../../src/explorer/model/InstalledChaincodeVersionTreeItem';
+import { FabricConnectionManager } from '../../src/fabric/FabricConnectionManager';
 
 chai.use(sinonChai);
 const should = chai.should();
 
 // tslint:disable no-unused-expression
 describe('BlockchainNetworkExplorer', () => {
+
+    describe('constructor', () => {
+
+        let mySandBox: sinon.SinonSandbox;
+
+        beforeEach(() => {
+            mySandBox = sinon.createSandbox();
+        });
+
+        afterEach(() => {
+            mySandBox.restore();
+        });
+
+        it('should register for connected events from the connection manager', async () => {
+            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
+            const blockchainNetworkExplorerProvider: BlockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
+            mySandBox.stub(blockchainNetworkExplorerProvider, 'connect').resolves();
+            mySandBox.stub(blockchainNetworkExplorerProvider, 'disconnect').resolves();
+            const mockConnection: sinon.SinonStubbedInstance<FabricClientConnection> = sinon.createStubInstance(FabricClientConnection);
+            const connectionManager: FabricConnectionManager = FabricConnectionManager.instance();
+            connectionManager.emit('connected', mockConnection);
+            blockchainNetworkExplorerProvider.connect.should.have.been.calledOnceWithExactly(mockConnection);
+        });
+
+        it('should register for disconnected events from the connection manager', async () => {
+            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
+            const blockchainNetworkExplorerProvider: BlockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
+            mySandBox.stub(blockchainNetworkExplorerProvider, 'connect').resolves();
+            mySandBox.stub(blockchainNetworkExplorerProvider, 'disconnect').resolves();
+            const connectionManager: FabricConnectionManager = FabricConnectionManager.instance();
+            connectionManager.emit('disconnected');
+            blockchainNetworkExplorerProvider.disconnect.should.have.been.calledOnceWithExactly();
+        });
+
+    });
 
     describe('getChildren', () => {
 
