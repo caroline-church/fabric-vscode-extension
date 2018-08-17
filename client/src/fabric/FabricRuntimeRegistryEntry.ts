@@ -12,9 +12,9 @@
  * limitations under the License.
 */
 
-import { BaseFabricRegistryEntry } from './BaseFabricRegistryEntry';
+import { FabricRegistryEntry } from './FabricRegistryEntry';
 
-export class FabricRuntimeRegistryEntry extends BaseFabricRegistryEntry {
+export class FabricRuntimeRegistryEntry extends FabricRegistryEntry {
 
     public developmentMode: boolean;
 
