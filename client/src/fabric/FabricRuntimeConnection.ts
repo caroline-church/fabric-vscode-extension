@@ -11,10 +11,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
+
 'use strict';
-import {
-    loadFromConfig
-} from 'fabric-client';
+
 import { FabricConnection } from './FabricConnection';
 import { FabricRuntime } from './FabricRuntime';
 
@@ -27,12 +26,9 @@ export class FabricRuntimeConnection extends FabricConnection {
     async connect(): Promise<void> {
         console.log('connect');
         const connectionProfile: object = await this.runtime.getConnectionProfile();
-        this.client = await loadFromConfig(connectionProfile);
-        const mspid: string = this.client.getMspid();
-        const certString: string = await this.runtime.getCertificate();
-        const privateKeyString: string = await this.runtime.getPrivateKey();
-        // TODO: probably need to use a store rather than this as not every config will be an admin
-        this.client.setAdminSigningIdentity(privateKeyString, certString, mspid);
+        const certificate: string = await this.runtime.getCertificate();
+        const privateKey: string = await this.runtime.getPrivateKey();
+        await this.connectInner(connectionProfile, certificate, privateKey);
     }
 
 }

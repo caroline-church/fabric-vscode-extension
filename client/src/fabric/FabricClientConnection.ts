@@ -11,14 +11,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
+
 'use strict';
-import {
-    loadFromConfig
-} from 'fabric-client';
+
 import * as fs from 'fs';
 import { FabricConnection } from './FabricConnection';
+import { promisify } from 'util';
 
 const ENCODING = 'utf8';
+const readFile = promisify(fs.readFile);
 
 export class FabricClientConnection extends FabricConnection {
 
@@ -35,18 +36,16 @@ export class FabricClientConnection extends FabricConnection {
 
     async connect(): Promise<void> {
         console.log('connect');
-        this.client = await loadFromConfig(this.connectionProfilePath);
-        const mspid: string = this.client.getMspid();
-        const certString: string = this.loadFileFromDisk(this.certificatePath);
-        const privateKeyString: string = this.loadFileFromDisk(this.privateKeyPath);
-        // TODO: probably need to use a store rather than this as not every config will be an admin
-        this.client.setAdminSigningIdentity(privateKeyString, certString, mspid);
-
+        const connectionProfileContents = await readFile(this.connectionProfilePath, ENCODING);
+        const connectionProfile = JSON.parse(connectionProfileContents);
+        const certificate: string = await this.loadFileFromDisk(this.certificatePath);
+        const privateKey: string = await this.loadFileFromDisk(this.privateKeyPath);
+        await this.connectInner(connectionProfile, certificate, privateKey);
     }
 
-    private loadFileFromDisk(path: string): string {
+    private async loadFileFromDisk(path: string): Promise<string> {
         console.log('loadFileFromDisk', path);
-        return fs.readFileSync(path, ENCODING) as string;
+        return readFile(path, ENCODING);
     }
 
 }

@@ -13,7 +13,7 @@
 */
 'use strict';
 import {
-    ChannelQueryResponse, ChaincodeQueryResponse,
+    loadFromConfig, ChannelQueryResponse, ChaincodeQueryResponse,
     Peer, Channel
 } from 'fabric-client';
 import * as Client from 'fabric-client';
@@ -88,6 +88,12 @@ export abstract class FabricConnection {
         });
 
         return instantiatedChaincodes;
+    }
+
+    protected async connectInner(connectionProfile: object, certificate: string, privateKey: string): Promise<void> {
+        this.client = await loadFromConfig(connectionProfile);
+        const mspid: string = this.client.getMspid();
+        this.client.setAdminSigningIdentity(privateKey, certificate, mspid);
     }
 
     private getChannel(channelName: string): Channel {
