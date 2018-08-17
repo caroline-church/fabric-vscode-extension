@@ -14,10 +14,11 @@
 'use strict';
 import * as vscode from 'vscode';
 import { BlockchainTreeItem } from './BlockchainTreeItem';
+import { BlockchainExplorerProvider } from '../BlockchainExplorerProvider';
 
 export class PackageTreeItem extends BlockchainTreeItem {
 
-    constructor(public readonly name: string) {
-        super(name, vscode.TreeItemCollapsibleState.None);
+    constructor(provider: BlockchainExplorerProvider, public readonly name: string) {
+        super(provider, name, vscode.TreeItemCollapsibleState.None);
     }
 }

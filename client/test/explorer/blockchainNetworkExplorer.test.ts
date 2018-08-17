@@ -32,12 +32,48 @@ import { PeerTreeItem } from '../../src/explorer/model/PeerTreeItem';
 import { ChainCodeTreeItem } from '../../src/explorer/model/ChainCodeTreeItem';
 import { InstalledChainCodeTreeItem } from '../../src/explorer/model/InstalledChainCodeTreeItem';
 import { InstalledChainCodeVersionTreeItem } from '../../src/explorer/model/InstalledChaincodeVersionTreeItem';
+import { FabricConnectionManager } from '../../src/fabric/FabricConnectionManager';
 
 chai.use(sinonChai);
 const should = chai.should();
 
 // tslint:disable no-unused-expression
 describe('BlockchainNetworkExplorer', () => {
+
+    describe('constructor', () => {
+
+        let mySandBox: sinon.SinonSandbox;
+
+        beforeEach(() => {
+            mySandBox = sinon.createSandbox();
+        });
+
+        afterEach(() => {
+            mySandBox.restore();
+        });
+
+        it('should register for connected events from the connection manager', async () => {
+            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
+            const blockchainNetworkExplorerProvider: BlockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
+            mySandBox.stub(blockchainNetworkExplorerProvider, 'connect').resolves();
+            mySandBox.stub(blockchainNetworkExplorerProvider, 'disconnect').resolves();
+            const mockConnection: sinon.SinonStubbedInstance<FabricClientConnection> = sinon.createStubInstance(FabricClientConnection);
+            const connectionManager: FabricConnectionManager = FabricConnectionManager.instance();
+            connectionManager.emit('connected', mockConnection);
+            blockchainNetworkExplorerProvider.connect.should.have.been.calledOnceWithExactly(mockConnection);
+        });
+
+        it('should register for disconnected events from the connection manager', async () => {
+            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
+            const blockchainNetworkExplorerProvider: BlockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
+            mySandBox.stub(blockchainNetworkExplorerProvider, 'connect').resolves();
+            mySandBox.stub(blockchainNetworkExplorerProvider, 'disconnect').resolves();
+            const connectionManager: FabricConnectionManager = FabricConnectionManager.instance();
+            connectionManager.emit('disconnected');
+            blockchainNetworkExplorerProvider.disconnect.should.have.been.calledOnceWithExactly();
+        });
+
+    });
 
     describe('getChildren', () => {
 
@@ -736,32 +772,36 @@ describe('BlockchainNetworkExplorer', () => {
             onDidChangeTreeDataSpy.should.have.been.called;
         });
 
-        it('should test when a connection is added the list is refreshed', async () => {
+        it('should test the tree is refreshed when the refresh command is run', async () => {
+
+            const mockTreeItem = sinon.createStubInstance(ConnectionTreeItem);
 
             await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
-            // reset the available connections
-            await vscode.workspace.getConfiguration().update('fabric.connections', [], vscode.ConfigurationTarget.Global);
-
-            const showInputBoxStub = mySandBox.stub(vscode.window, 'showInputBox');
-
-            const rootPath = path.dirname(__dirname);
-
-            showInputBoxStub.onFirstCall().resolves('myConnection');
-            showInputBoxStub.onSecondCall().resolves(path.join(rootPath, '../../test/data/connectionOne/connection.json'));
-            showInputBoxStub.onThirdCall().resolves(path.join(rootPath, '../../test/data/connectionOne/credentials/certificate'));
-            showInputBoxStub.onCall(3).resolves(path.join(rootPath, '../../test/data/connectionOne/credentials/privateKey'));
 
             const blockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
 
             const onDidChangeTreeDataSpy = mySandBox.spy(blockchainNetworkExplorerProvider['_onDidChangeTreeData'], 'fire');
 
-            await vscode.commands.executeCommand('blockchainExplorer.addConnectionEntry');
+            await vscode.commands.executeCommand('blockchainExplorer.refreshEntry', mockTreeItem);
 
-            onDidChangeTreeDataSpy.should.have.been.called;
+            onDidChangeTreeDataSpy.should.have.been.calledOnceWithExactly(mockTreeItem);
         });
 
-        it('should test the tree is refreshed when a client connection is passed in', async () => {
+    });
+
+    describe('connect', () => {
+
+        let mySandBox;
+
+        beforeEach(() => {
+            mySandBox = sinon.createSandbox();
+        });
+
+        afterEach(() => {
+            mySandBox.restore();
+        });
+
+        it('should set the current client connection', async () => {
 
             await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
 
@@ -781,14 +821,14 @@ describe('BlockchainNetworkExplorer', () => {
 
             const executeCommandSpy = mySandBox.spy(vscode.commands, 'executeCommand');
 
-            await vscode.commands.executeCommand('blockchainExplorer.refreshEntry', myClientConnection);
+            await blockchainNetworkExplorerProvider.connect(myClientConnection);
 
             onDidChangeTreeDataSpy.should.have.been.called;
 
             blockchainNetworkExplorerProvider['connection'].should.deep.equal(myClientConnection);
 
-            executeCommandSpy.should.have.been.calledTwice;
-            executeCommandSpy.getCall(1).should.have.been.calledWith('setContext', 'blockchain-connected');
+            executeCommandSpy.should.have.been.calledOnce;
+            executeCommandSpy.getCall(0).should.have.been.calledWith('setContext', 'blockchain-connected', true);
         });
     });
 
@@ -822,14 +862,14 @@ describe('BlockchainNetworkExplorer', () => {
 
             const executeCommandSpy = mySandBox.spy(vscode.commands, 'executeCommand');
 
-            await vscode.commands.executeCommand('blockchainExplorer.disconnectEntry');
+            await blockchainNetworkExplorerProvider.disconnect();
 
             onDidChangeTreeDataSpy.should.have.been.called;
 
             should.not.exist(blockchainNetworkExplorerProvider['connection']);
 
-            executeCommandSpy.should.have.been.calledTwice;
-            executeCommandSpy.getCall(1).should.have.been.calledWith('setContext', 'blockchain-connected');
+            executeCommandSpy.should.have.been.calledOnce;
+            executeCommandSpy.getCall(0).should.have.been.calledWith('setContext', 'blockchain-connected', false);
         });
     });
 

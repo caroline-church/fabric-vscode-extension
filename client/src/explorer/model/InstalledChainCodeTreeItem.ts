@@ -14,11 +14,12 @@
 'use strict';
 import * as vscode from 'vscode';
 import { BlockchainTreeItem } from './BlockchainTreeItem';
+import { BlockchainExplorerProvider } from '../BlockchainExplorerProvider';
 
 export class InstalledChainCodeTreeItem extends BlockchainTreeItem {
     contextValue = 'blockchain-installed-chaincode-item';
 
-    constructor(private readonly name: string, public readonly versions: Array<string>) {
-        super(name, vscode.TreeItemCollapsibleState.Collapsed);
+    constructor(provider: BlockchainExplorerProvider, private readonly name: string, public readonly versions: Array<string>) {
+        super(provider, name, vscode.TreeItemCollapsibleState.Collapsed);
     }
 }

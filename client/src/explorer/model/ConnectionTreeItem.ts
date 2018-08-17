@@ -14,11 +14,12 @@
 'use strict';
 import * as vscode from 'vscode';
 import { BlockchainTreeItem } from './BlockchainTreeItem';
+import { BlockchainExplorerProvider } from '../BlockchainExplorerProvider';
 
 export class ConnectionTreeItem extends BlockchainTreeItem {
     contextValue = 'blockchain-connection-item';
 
-    constructor(public readonly label: string, public readonly connection: any, public readonly collapsableState: vscode.TreeItemCollapsibleState, public readonly command?: vscode.Command) {
-        super(label, collapsableState);
+    constructor(provider: BlockchainExplorerProvider, public readonly label: string, public readonly connection: any, public readonly collapsableState: vscode.TreeItemCollapsibleState, public readonly command?: vscode.Command) {
+        super(provider, label, collapsableState);
     }
 }

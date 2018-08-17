@@ -14,6 +14,7 @@
 'use strict';
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { BlockchainExplorerProvider } from '../BlockchainExplorerProvider';
 
 export abstract class BlockchainTreeItem extends vscode.TreeItem {
     // TODO: update the icons
@@ -23,11 +24,15 @@ export abstract class BlockchainTreeItem extends vscode.TreeItem {
     };
     contextValue = 'blockchain-tree-item';
 
-    constructor(public readonly label: string, public readonly collapsibleState: vscode.TreeItemCollapsibleState) {
+    constructor(private readonly provider: BlockchainExplorerProvider, public readonly label: string, public readonly collapsibleState: vscode.TreeItemCollapsibleState) {
         super(label, collapsibleState);
     }
 
     get tooltip(): string {
         return `${this.label}`;
+    }
+
+    refresh(): void {
+        this.provider.refresh(this);
     }
 }

@@ -31,8 +31,10 @@ import { InstantiatedChainCodesTreeItem } from './model/InstantiatedChaincodesTr
 import { PeersTreeItem } from './model/PeersTreeItem';
 import { InstalledChainCodeTreeItem } from './model/InstalledChainCodeTreeItem';
 import { InstalledChainCodeVersionTreeItem } from './model/InstalledChaincodeVersionTreeItem';
+import { FabricConnectionManager } from '../fabric/FabricConnectionManager';
+import { BlockchainExplorerProvider } from './BlockchainExplorerProvider';
 
-export class BlockchainNetworkExplorerProvider implements vscode.TreeDataProvider<BlockchainTreeItem> {
+export class BlockchainNetworkExplorerProvider implements BlockchainExplorerProvider {
 
     // only for testing so can get the updated tree
     public tree: Array<BlockchainTreeItem> = [];
@@ -43,14 +45,34 @@ export class BlockchainNetworkExplorerProvider implements vscode.TreeDataProvide
 
     private connection: FabricClientConnection = null;
 
-    async refresh(connection?: FabricClientConnection): Promise<void> {
-        console.log('refresh', connection);
-        if (connection) {
-            this.connection = connection;
-            // This controls which menu buttons appear
-            await vscode.commands.executeCommand('setContext', 'blockchain-connected', true);
-        }
-        this._onDidChangeTreeData.fire();
+    constructor() {
+        FabricConnectionManager.instance().on('connected', async (connection: FabricClientConnection) => {
+            try {
+                await this.connect(connection);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Error handling connected event: ${error.message}`);
+            }
+        });
+        FabricConnectionManager.instance().on('disconnected', async () => {
+            try {
+                await this.disconnect();
+            } catch (error) {
+                vscode.window.showErrorMessage(`Error handling disconnected event: ${error.message}`);
+            }
+        });
+    }
+
+    async refresh(element?: BlockchainTreeItem): Promise<void> {
+        console.log('refresh', element);
+        this._onDidChangeTreeData.fire(element);
+    }
+
+    async connect(connection: FabricClientConnection): Promise<void> {
+        console.log('connect', connection);
+        this.connection = connection;
+        // This controls which menu buttons appear
+        await vscode.commands.executeCommand('setContext', 'blockchain-connected', true);
+        await this.refresh();
     }
 
     async disconnect(): Promise<void> {
@@ -58,7 +80,7 @@ export class BlockchainNetworkExplorerProvider implements vscode.TreeDataProvide
         this.connection = null;
         // This controls which menu buttons appear
         await vscode.commands.executeCommand('setContext', 'blockchain-connected', false);
-        return this.refresh();
+        await this.refresh();
     }
 
     test(data): Promise<void> {
@@ -85,10 +107,10 @@ export class BlockchainNetworkExplorerProvider implements vscode.TreeDataProvide
                     this.tree = [];
                     const channelElement: ChannelTreeItem = element as ChannelTreeItem;
 
-                    this.tree.push(new PeersTreeItem('Peers', channelElement.peers));
+                    this.tree.push(new PeersTreeItem(this, 'Peers', channelElement.peers));
 
                     if (channelElement.chaincodes.length > 0) {
-                        this.tree.push(new InstantiatedChainCodesTreeItem('Instantiated Chaincodes', element.chaincodes));
+                        this.tree.push(new InstantiatedChainCodesTreeItem(this, 'Instantiated Chaincodes', element.chaincodes));
                     }
                 }
 
@@ -129,7 +151,7 @@ export class BlockchainNetworkExplorerProvider implements vscode.TreeDataProvide
         const tree: Array<InstalledChainCodeVersionTreeItem> = [];
 
         chaincodeElement.versions.forEach((version) => {
-            tree.push(new InstalledChainCodeVersionTreeItem(version));
+            tree.push(new InstalledChainCodeVersionTreeItem(this, version));
         });
 
         return Promise.resolve(tree);
@@ -140,7 +162,7 @@ export class BlockchainNetworkExplorerProvider implements vscode.TreeDataProvide
         const tree: Array<InstalledChainCodeTreeItem> = [];
 
         peerElement.chaincodes.forEach((versions, name) => {
-            tree.push(new InstalledChainCodeTreeItem(name, versions));
+            tree.push(new InstalledChainCodeTreeItem(this, name, versions));
         });
 
         return tree;
@@ -151,7 +173,7 @@ export class BlockchainNetworkExplorerProvider implements vscode.TreeDataProvide
         const tree: Array<ChainCodeTreeItem> = [];
 
         instantiatedChainCodesElement.chaincodes.forEach((instantiatedChaincode) => {
-            tree.push(new ChainCodeTreeItem(instantiatedChaincode.name + ' - ' + instantiatedChaincode.version));
+            tree.push(new ChainCodeTreeItem(this, instantiatedChaincode.name + ' - ' + instantiatedChaincode.version));
         });
 
         return tree;
@@ -165,9 +187,9 @@ export class BlockchainNetworkExplorerProvider implements vscode.TreeDataProvide
             try {
                 const chaincodes: Map<string, Array<string>> = await this.connection.getInstalledChaincode(peer);
                 const collapsibleState = chaincodes.size > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None;
-                tree.push(new PeerTreeItem(peer, chaincodes, collapsibleState));
+                tree.push(new PeerTreeItem(this, peer, chaincodes, collapsibleState));
             } catch (error) {
-                tree.push(new PeerTreeItem(peer, new Map<string, Array<string>>(), vscode.TreeItemCollapsibleState.None));
+                tree.push(new PeerTreeItem(this, peer, new Map<string, Array<string>>(), vscode.TreeItemCollapsibleState.None));
                 vscode.window.showErrorMessage('Error when getting installed chaincodes for peer ' + peer + ' ' + error.message);
             }
         }
@@ -188,9 +210,9 @@ export class BlockchainNetworkExplorerProvider implements vscode.TreeDataProvide
             const peers: Array<string> = channelMap.get(channel);
             try {
                 chaincodes = await this.connection.getInstantiatedChaincode(channel);
-                tree.push(new ChannelTreeItem(channel, peers, chaincodes, vscode.TreeItemCollapsibleState.Collapsed));
+                tree.push(new ChannelTreeItem(this, channel, peers, chaincodes, vscode.TreeItemCollapsibleState.Collapsed));
             } catch (error) {
-                tree.push(new ChannelTreeItem(channel, peers, [], vscode.TreeItemCollapsibleState.Collapsed));
+                tree.push(new ChannelTreeItem(this, channel, peers, [], vscode.TreeItemCollapsibleState.Collapsed));
                 vscode.window.showErrorMessage('Error getting instantiated chaincode for channel ' + channel + ' ' + error.message);
             }
         }
@@ -247,7 +269,7 @@ export class BlockchainNetworkExplorerProvider implements vscode.TreeDataProvide
                     arguments: [fabricConnection]
                 };
 
-                tree.push(new ConnectionIdentityTreeItem(commonName, command));
+                tree.push(new ConnectionIdentityTreeItem(this, commonName, command));
 
             } catch (error) {
                 vscode.window.showErrorMessage('Error parsing certificate ' + error.message);
@@ -285,7 +307,8 @@ export class BlockchainNetworkExplorerProvider implements vscode.TreeDataProvide
                 };
             }
 
-            tree.push(new ConnectionTreeItem(connection.name,
+            tree.push(new ConnectionTreeItem(this,
+                connection.name,
                 connection,
                 collapsibleState,
                 command));
@@ -301,7 +324,7 @@ export class BlockchainNetworkExplorerProvider implements vscode.TreeDataProvide
             }
         });
 
-        tree.push(new AddConnectionTreeItem('Add new network', {
+        tree.push(new AddConnectionTreeItem(this, 'Add new network', {
             command: 'blockchainExplorer.addConnectionEntry',
             title: ''
         }));

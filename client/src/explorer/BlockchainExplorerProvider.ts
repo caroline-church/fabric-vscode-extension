@@ -11,15 +11,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
-'use strict';
-import { BlockchainTreeItem } from './BlockchainTreeItem';
+
 import * as vscode from 'vscode';
-import { BlockchainExplorerProvider } from '../BlockchainExplorerProvider';
+import { BlockchainTreeItem } from './model/BlockchainTreeItem';
 
-export class ChannelTreeItem extends BlockchainTreeItem {
-    contextValue = 'blockchain-channel-item';
+export interface BlockchainExplorerProvider extends vscode.TreeDataProvider<BlockchainTreeItem> {
 
-    constructor(provider: BlockchainExplorerProvider, private readonly channelName: string, public readonly peers: Array<string>, public readonly chaincodes: Array<any>, public readonly collapsibleState: vscode.TreeItemCollapsibleState) {
-        super(provider, channelName, collapsibleState);
-    }
+    refresh(element?: BlockchainTreeItem): Promise<void>;
+
 }

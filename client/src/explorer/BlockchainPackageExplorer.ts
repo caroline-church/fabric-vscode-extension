@@ -16,10 +16,11 @@ import { PackageTreeItem } from './model/PackageTreeItem';
 import * as fs from 'fs';
 import * as util from 'util';
 import * as path from 'path';
+import { BlockchainExplorerProvider } from './BlockchainExplorerProvider';
 const readDir = util.promisify(fs.readdir);
 const readFile = util.promisify(fs.readFile);
 
-export class BlockchainPackageExplorerProvider implements vscode.TreeDataProvider<PackageTreeItem> {
+export class BlockchainPackageExplorerProvider implements BlockchainExplorerProvider {
     public tree: Array<PackageTreeItem> = [];
     private packageArray: Array<any>;
     private packageDir: string;
@@ -76,7 +77,7 @@ export class BlockchainPackageExplorerProvider implements vscode.TreeDataProvide
             } catch (error) {
                 console.log('failed to get smart contract package version', error.message);
             } finally {
-                tree.push(new PackageTreeItem(packageTitle));
+                tree.push(new PackageTreeItem(this, packageTitle));
             }
         }
         return tree;

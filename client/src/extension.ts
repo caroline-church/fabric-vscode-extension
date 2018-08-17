@@ -33,7 +33,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
     vscode.window.registerTreeDataProvider('blockchainExplorer', blockchainNetworkExplorerProvider);
     vscode.window.registerTreeDataProvider('blockchainAPackageExplorer', blockchainPackageExplorerProvider);
-    vscode.commands.registerCommand('blockchainExplorer.refreshEntry', (connection) => blockchainNetworkExplorerProvider.refresh(connection));
+    vscode.commands.registerCommand('blockchainExplorer.refreshEntry', (element) => blockchainNetworkExplorerProvider.refresh(element));
     vscode.commands.registerCommand('blockchainExplorer.connectEntry', (connection) => connect(connection));
     vscode.commands.registerCommand('blockchainExplorer.disconnectEntry', () => blockchainNetworkExplorerProvider.disconnect());
     vscode.commands.registerCommand('blockchainExplorer.addConnectionEntry', addConnection);

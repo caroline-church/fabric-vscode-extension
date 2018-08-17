@@ -35,8 +35,8 @@ describe('ConnectCommand', () => {
 
     describe('connect', () => {
 
-        let mySandBox;
-        let fabricClientMock;
+        let mySandBox: sinon.SinonSandbox;
+        let fabricClientMock: sinon.SinonStubbedInstance<fabricClient>;
 
         beforeEach(() => {
             fabricClientMock = sinon.createStubInstance(fabricClient);
@@ -66,19 +66,17 @@ describe('ConnectCommand', () => {
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', connections, vscode.ConfigurationTarget.Global);
 
-            const refreshSpy = mySandBox.spy(vscode.commands, 'executeCommand');
-
             mySandBox.stub(vscode.window, 'showQuickPick').resolves('myConnection');
 
             const loadFromConfigStub = mySandBox.stub(fabricClient, 'loadFromConfig').returns(fabricClientMock);
+
+            const connectStub = mySandBox.stub(myExtension.getBlockchainNetworkExplorerProvider(), 'connect');
 
             await vscode.commands.executeCommand('blockchainExplorer.connectEntry');
 
             loadFromConfigStub.should.have.been.called;
 
-            refreshSpy.callCount.should.equal(3);
-            refreshSpy.getCall(1).should.have.been.calledWith('blockchainExplorer.refreshEntry', sinon.match.instanceOf(FabricClientConnection));
-            refreshSpy.getCall(2).should.have.been.calledWith('setContext', 'blockchain-connected');
+            connectStub.should.have.been.calledOnceWithExactly(sinon.match.instanceOf(FabricClientConnection));
         });
 
         it('should test the a fabric can be connected to from the command with multiple identities', async () => {
@@ -102,21 +100,19 @@ describe('ConnectCommand', () => {
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', connections, vscode.ConfigurationTarget.Global);
 
-            const refreshSpy = mySandBox.spy(vscode.commands, 'executeCommand');
-
             const quickPickStub = mySandBox.stub(vscode.window, 'showQuickPick');
             quickPickStub.onFirstCall().resolves('myConnection');
             quickPickStub.onSecondCall().resolves('Admin@org1.example.com');
 
             const loadFromConfigStub = mySandBox.stub(fabricClient, 'loadFromConfig').returns(fabricClientMock);
 
+            const connectStub = mySandBox.stub(myExtension.getBlockchainNetworkExplorerProvider(), 'connect');
+
             await vscode.commands.executeCommand('blockchainExplorer.connectEntry');
 
             loadFromConfigStub.should.have.been.called;
 
-            refreshSpy.callCount.should.equal(3);
-            refreshSpy.getCall(1).should.have.been.calledWith('blockchainExplorer.refreshEntry', sinon.match.instanceOf(FabricClientConnection));
-            refreshSpy.getCall(2).should.have.been.calledWith('setContext', 'blockchain-connected');
+            connectStub.should.have.been.calledOnceWithExactly(sinon.match.instanceOf(FabricClientConnection));
         });
 
         it('should test that can cancel on choosing connection', async () => {
@@ -168,16 +164,11 @@ describe('ConnectCommand', () => {
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', connections, vscode.ConfigurationTarget.Global);
 
-            const refreshSpy = mySandBox.spy(vscode.commands, 'executeCommand');
-
             const quickPickStub = mySandBox.stub(vscode.window, 'showQuickPick');
             quickPickStub.onFirstCall().resolves('myConnection');
             quickPickStub.onSecondCall().resolves();
 
             await vscode.commands.executeCommand('blockchainExplorer.connectEntry');
-
-            refreshSpy.callCount.should.equal(1);
-            refreshSpy.getCall(0).should.have.been.calledWith('blockchainExplorer.connectEntry');
         });
 
         it('should test the a fabric can be connected to from the tree', async () => {
@@ -197,14 +188,14 @@ describe('ConnectCommand', () => {
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', connections, vscode.ConfigurationTarget.Global);
 
-            const refreshSpy = mySandBox.spy(vscode.commands, 'executeCommand');
-
             const blockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
             const allChildren: Array<BlockchainTreeItem> = await blockchainNetworkExplorerProvider.getChildren();
 
             const myConnectionItem: ConnectionTreeItem = allChildren[0] as ConnectionTreeItem;
 
             const loadFromConfigStub = mySandBox.stub(fabricClient, 'loadFromConfig').returns(fabricClientMock);
+
+            const connectStub = mySandBox.stub(myExtension.getBlockchainNetworkExplorerProvider(), 'connect');
 
             const myConnection = {
                 connectionProfilePath: myConnectionItem.connection.connectionProfilePath,
@@ -216,9 +207,7 @@ describe('ConnectCommand', () => {
 
             loadFromConfigStub.should.have.been.called;
 
-            refreshSpy.callCount.should.equal(3);
-            refreshSpy.getCall(1).should.have.been.calledWith('blockchainExplorer.refreshEntry', sinon.match.instanceOf(FabricClientConnection));
-            refreshSpy.getCall(2).should.have.been.calledWith('setContext', 'blockchain-connected');
+            connectStub.should.have.been.calledOnceWithExactly(sinon.match.instanceOf(FabricClientConnection));
         });
 
         it('should handle connection not found', async () => {
@@ -238,8 +227,6 @@ describe('ConnectCommand', () => {
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', connections, vscode.ConfigurationTarget.Global);
 
-            const refreshSpy = mySandBox.spy(vscode.commands, 'executeCommand');
-
             mySandBox.stub(vscode.window, 'showQuickPick').resolves('no connection');
 
             const errorMessageSpy = mySandBox.spy(vscode.window, 'showErrorMessage');
@@ -247,9 +234,6 @@ describe('ConnectCommand', () => {
             await vscode.commands.executeCommand('blockchainExplorer.connectEntry');
 
             errorMessageSpy.should.have.been.calledWith('Could not connect as no connection found');
-
-            refreshSpy.callCount.should.equal(1);
-            refreshSpy.getCall(0).should.have.been.calledWith('blockchainExplorer.connectEntry');
         });
 
         it('should handle identity not found', async () => {
@@ -273,8 +257,6 @@ describe('ConnectCommand', () => {
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', connections, vscode.ConfigurationTarget.Global);
 
-            const refreshSpy = mySandBox.spy(vscode.commands, 'executeCommand');
-
             const quickPickStub = mySandBox.stub(vscode.window, 'showQuickPick');
             quickPickStub.onFirstCall().resolves('myConnection');
             quickPickStub.onSecondCall().resolves('no identity');
@@ -284,9 +266,6 @@ describe('ConnectCommand', () => {
             await vscode.commands.executeCommand('blockchainExplorer.connectEntry');
 
             errorMessageSpy.should.have.been.calledWith('Could not connect as no identity found');
-
-            refreshSpy.callCount.should.equal(1);
-            refreshSpy.getCall(0).should.have.been.calledWith('blockchainExplorer.connectEntry');
         });
 
         it('should handle error from conecting', async () => {
@@ -306,8 +285,6 @@ describe('ConnectCommand', () => {
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', connections, vscode.ConfigurationTarget.Global);
 
-            const refreshSpy = mySandBox.spy(vscode.commands, 'executeCommand');
-
             const blockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
             const allChildren: Array<BlockchainTreeItem> = await blockchainNetworkExplorerProvider.getChildren();
 
@@ -322,9 +299,6 @@ describe('ConnectCommand', () => {
             loadFromConfigStub.should.have.been.called;
 
             errorMessageSpy.should.have.been.calledWith('some error');
-
-            refreshSpy.callCount.should.equal(1);
-            refreshSpy.getCall(0).should.have.been.calledWith('blockchainExplorer.connectEntry');
         });
     });
 });
