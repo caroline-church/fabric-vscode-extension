@@ -23,6 +23,7 @@ import { FabricConnectionRegistry } from '../fabric/FabricConnectionRegistry';
 import { FabricConnection } from '../fabric/FabricConnection';
 import { FabricRuntimeManager } from '../fabric/FabricRuntimeManager';
 import { FabricRuntimeConnection } from '../fabric/FabricRuntimeConnection';
+import { FabricRuntime } from '../fabric/FabricRuntime';
 
 export async function connect(connectionName: string, identityName?: string): Promise<void> {
     console.log('connect', connectionName, identityName);
@@ -44,8 +45,8 @@ export async function connect(connectionName: string, identityName?: string): Pr
     let connection: FabricConnection;
     if (connectionRegistryEntry.managedRuntime) {
 
-        const runtimeManager = FabricRuntimeManager.instance();
-        const runtime = runtimeManager.get(connectionName);
+        const runtimeManager: FabricRuntimeManager = FabricRuntimeManager.instance();
+        const runtime: FabricRuntime = runtimeManager.get(connectionName);
         connection = new FabricRuntimeConnection(runtime);
 
     } else {
