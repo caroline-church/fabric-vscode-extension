@@ -13,7 +13,7 @@ instrumentation:
 
 check:
     global:
-        statements: 93.52
-        branches: 97.21
-        functions: 94.02
-        lines: 97.03
+        statements: 100
+        branches: 100
+        functions: 100
+        lines: 100

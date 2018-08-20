@@ -39,7 +39,6 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('blockchainExplorer.addConnectionEntry', addConnection);
     vscode.commands.registerCommand('blockchainExplorer.deleteConnectionEntry', (connection) => deleteConnection(connection));
     vscode.commands.registerCommand('blockchainExplorer.addConnectionIdentityEntry', (connection) => addConnectionIdentity(connection));
-    vscode.commands.registerCommand('blockchainExplorer.testEntry', (data) => blockchainNetworkExplorerProvider.test(data));
     vscode.commands.registerCommand('createFabricProjectEntry', createFabricProject);
     vscode.commands.registerCommand('blockchainAPackageExplorer.refreshEntry', () => blockchainPackageExplorerProvider.refresh());
 

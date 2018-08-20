@@ -17,7 +17,6 @@
 import * as vscode from 'vscode';
 
 import { FabricConnection } from '../fabric/FabricConnection';
-import { GenerateTests } from './generateTests';
 import { ParsedCertificate } from '../parsedCertificate';
 
 import { PeerTreeItem } from './model/PeerTreeItem';
@@ -85,11 +84,6 @@ export class BlockchainNetworkExplorerProvider implements BlockchainExplorerProv
         // This controls which menu buttons appear
         await vscode.commands.executeCommand('setContext', 'blockchain-connected', false);
         await this.refresh();
-    }
-
-    test(data): Promise<void> {
-        console.log('test', data);
-        return GenerateTests.createFile();
     }
 
     getTreeItem(element: BlockchainTreeItem): vscode.TreeItem {
