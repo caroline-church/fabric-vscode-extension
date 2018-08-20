@@ -13,11 +13,9 @@
 */
 'use strict';
 import * as vscode from 'vscode';
-import { ParsedCertificate } from '../parsedCertificate';
-import * as childProcessPromise from 'child-process-promise';
-const exec = childProcessPromise.exec;
+import { ParsedCertificate } from '../fabric/ParsedCertificate';
 
-export class Util {
+export class CommandsUtil {
 
     static showConnectionQuickPickBox(prompt: string): Thenable<string | undefined> {
         const connections: Array<any> = vscode.workspace.getConfiguration().get('fabric.connections');
@@ -46,25 +44,19 @@ export class Util {
 
     static showIdentityConnectionQuickPickBox(prompt: string, connection: any): Thenable<string | undefined> {
 
-    const quickPickOptions = {
-        ignoreFocusOut: false,
-        canPickMany: false,
-        placeHolder: prompt
-    };
+        const quickPickOptions = {
+            ignoreFocusOut: false,
+            canPickMany: false,
+            placeHolder: prompt
+        };
 
-    const identityNames: Array<string> = [];
+        const identityNames: Array<string> = [];
 
-    connection.identities.forEach((identity) => {
-        const parsedCert: any = new ParsedCertificate(identity.certificatePath);
-        identityNames.push(parsedCert.getCommonName());
-    });
+        connection.identities.forEach((identity) => {
+            const parsedCert: any = new ParsedCertificate(identity.certificatePath);
+            identityNames.push(parsedCert.getCommonName());
+        });
 
-    return vscode.window.showQuickPick(identityNames, quickPickOptions);
-    }
-
-    // Send shell command
-    static async sendCommand(command: string, cwd?: string): Promise<string> {
-        const result = await exec(command, {cwd: cwd});
-        return result.stdout.trim();
+        return vscode.window.showQuickPick(identityNames, quickPickOptions);
     }
 }

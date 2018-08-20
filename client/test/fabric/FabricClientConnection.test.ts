@@ -13,6 +13,7 @@
 */
 
 import { FabricClientConnection } from '../../src/fabric/FabricClientConnection';
+import { FabricConnectionFactory} from '../../src/fabric/FabricConnectionFactory';
 import * as fabricClient from 'fabric-client';
 import * as path from 'path';
 
@@ -42,7 +43,7 @@ describe('FabricClientConnection', () => {
             privateKeyPath: path.join(rootPath, '../../test/data/connectionOne/credentials/privateKey')
         };
 
-        fabricClientConnection = new FabricClientConnection(connectionData);
+        fabricClientConnection = FabricConnectionFactory.createFabricClientConnection(connectionData) as FabricClientConnection;
 
         fabricClientStub = mySandBox.createStubInstance(fabricClient);
 

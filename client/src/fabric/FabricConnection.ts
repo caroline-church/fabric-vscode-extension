@@ -17,8 +17,9 @@ import {
     Peer, Channel
 } from 'fabric-client';
 import * as Client from 'fabric-client';
+import { IFabricConnection } from './IFabricConnection';
 
-export abstract class FabricConnection {
+export abstract class FabricConnection implements IFabricConnection {
 
     protected client: Client;
 

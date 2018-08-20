@@ -23,7 +23,8 @@ import { FabricRuntime } from '../../src/fabric/FabricRuntime';
 
 import * as chai from 'chai';
 import * as sinon from 'sinon';
-import { FabricOutputAdapter } from '../../src/fabric/FabricOutputAdapter';
+import { OutputAdapter } from '../../src/logging/OutputAdapter';
+import { ExtensionUtil } from '../../src/util/ExtensionUtil';
 chai.should();
 
 // tslint:disable no-unused-expression
@@ -41,7 +42,7 @@ describe('FabricRuntime', () => {
     let mockCAInspect: any;
 
     // tslint:disable max-classes-per-file
-    class TestFabricOutputAdapter implements FabricOutputAdapter {
+    class TestFabricOutputAdapter implements OutputAdapter {
 
         public log(value: string): void {
             console.log(value);
@@ -54,7 +55,7 @@ describe('FabricRuntime', () => {
     }
 
     beforeEach(async () => {
-        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
+        await ExtensionUtil.activateExtension();
         await runtimeRegistry.clear();
         runtimeRegistryEntry = new FabricRuntimeRegistryEntry();
         runtimeRegistryEntry.name = 'runtime1';
@@ -165,7 +166,7 @@ describe('FabricRuntime', () => {
             spawnStub.withArgs('/bin/sh', [ 'start.sh' ], sinon.match.any).callsFake(() => {
                 return originalSpawn('/bin/sh', [ '-c', 'echo stdout && echo stderr >&2 && false' ]);
             });
-            await runtime.start().should.be.rejectedWith(/Failed to execute script "start.sh" with return code 1/);
+            await runtime.start().should.be.rejectedWith(`Failed to execute command "/bin/sh" with  arguments "start.sh" return code 1`);
             spawnStub.should.have.been.calledOnce;
             spawnStub.should.have.been.calledWith('/bin/sh', [ 'start.sh' ], sinon.match.any);
         });
@@ -178,8 +179,8 @@ describe('FabricRuntime', () => {
             });
             const outputAdapter = sinon.createStubInstance(TestFabricOutputAdapter);
             await runtime.start(outputAdapter);
-            outputAdapter.log.should.have.been.calledOnceWith('start.sh : stdout');
-            outputAdapter.error.should.have.been.calledOnceWith('start.sh : stderr');
+            outputAdapter.log.should.have.been.calledOnceWith('stdout');
+            outputAdapter.error.should.have.been.calledOnceWith('stderr');
         });
 
     });
@@ -210,7 +211,7 @@ describe('FabricRuntime', () => {
             spawnStub.withArgs('/bin/sh', [ 'teardown.sh' ], sinon.match.any).callsFake(() => {
                 return originalSpawn('/bin/sh', [ '-c', 'echo stdout && echo stderr >&2 && true' ]);
             });
-            await runtime.stop().should.be.rejectedWith(/Failed to execute script "stop.sh" with return code 1/);
+            await runtime.stop().should.be.rejectedWith(`Failed to execute command "/bin/sh" with  arguments "stop.sh" return code 1`);
             spawnStub.should.have.been.calledOnce;
             spawnStub.should.have.been.calledWith('/bin/sh', [ 'stop.sh' ], sinon.match.any);
         });
@@ -224,7 +225,7 @@ describe('FabricRuntime', () => {
             spawnStub.withArgs('/bin/sh', [ 'teardown.sh' ], sinon.match.any).callsFake(() => {
                 return originalSpawn('/bin/sh', [ '-c', 'echo stdout && echo stderr >&2 && false' ]);
             });
-            await runtime.stop().should.be.rejectedWith(/Failed to execute script "teardown.sh" with return code 1/);
+            await runtime.stop().should.be.rejectedWith(`Failed to execute command "/bin/sh" with  arguments "teardown.sh" return code 1`);
             spawnStub.should.have.been.calledTwice;
             spawnStub.should.have.been.calledWith('/bin/sh', [ 'stop.sh' ], sinon.match.any);
             spawnStub.should.have.been.calledWith('/bin/sh', [ 'teardown.sh' ], sinon.match.any);
@@ -243,10 +244,10 @@ describe('FabricRuntime', () => {
             await runtime.stop(outputAdapter);
             outputAdapter.log.should.have.been.calledTwice;
             outputAdapter.error.should.have.been.calledTwice;
-            outputAdapter.log.should.have.been.calledWith('stop.sh : stdout');
-            outputAdapter.error.should.have.been.calledWith('stop.sh : stderr');
-            outputAdapter.log.should.have.been.calledWith('teardown.sh : stdout');
-            outputAdapter.error.should.have.been.calledWith('stop.sh : stderr');
+            outputAdapter.log.should.have.been.calledWith('stdout');
+            outputAdapter.error.should.have.been.calledWith('stderr');
+            outputAdapter.log.should.have.been.calledWith('stdout');
+            outputAdapter.error.should.have.been.calledWith('stderr');
         });
 
     });
@@ -288,12 +289,12 @@ describe('FabricRuntime', () => {
             await runtime.restart(outputAdapter);
             outputAdapter.log.should.have.been.calledThrice;
             outputAdapter.error.should.have.been.calledThrice;
-            outputAdapter.log.should.have.been.calledWith('start.sh : stdout');
-            outputAdapter.error.should.have.been.calledWith('start.sh : stderr');
-            outputAdapter.log.should.have.been.calledWith('stop.sh : stdout');
-            outputAdapter.error.should.have.been.calledWith('stop.sh : stderr');
-            outputAdapter.log.should.have.been.calledWith('teardown.sh : stdout');
-            outputAdapter.error.should.have.been.calledWith('stop.sh : stderr');
+            outputAdapter.log.should.have.been.calledWith('stdout');
+            outputAdapter.error.should.have.been.calledWith('stderr');
+            outputAdapter.log.should.have.been.calledWith('stdout');
+            outputAdapter.error.should.have.been.calledWith('stderr');
+            outputAdapter.log.should.have.been.calledWith('stdout');
+            outputAdapter.error.should.have.been.calledWith('stderr');
         });
 
     });

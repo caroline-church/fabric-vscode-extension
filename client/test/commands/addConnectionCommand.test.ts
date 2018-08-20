@@ -18,6 +18,7 @@ import * as path from 'path';
 import * as chai from 'chai';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
+import { ExtensionUtil } from '../../src/util/ExtensionUtil';
 
 chai.should();
 chai.use(sinonChai);
@@ -27,8 +28,10 @@ describe('AddConnectionCommand', () => {
 
     describe('addConnection', () => {
 
-        beforeEach(() => {
+        beforeEach(async () => {
             mySandBox = sinon.createSandbox();
+
+            await ExtensionUtil.activateExtension();
         });
 
         afterEach(() => {
@@ -36,8 +39,6 @@ describe('AddConnectionCommand', () => {
         });
 
         it('should test a connection can be added', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', [], vscode.ConfigurationTarget.Global);
 
@@ -70,8 +71,6 @@ describe('AddConnectionCommand', () => {
         });
 
         it('should test another connection can be added', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', [], vscode.ConfigurationTarget.Global);
 
@@ -135,8 +134,6 @@ describe('AddConnectionCommand', () => {
         });
 
         it('should test a connection can be cancelled when naming connection', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', [], vscode.ConfigurationTarget.Global);
 
@@ -158,8 +155,6 @@ describe('AddConnectionCommand', () => {
         });
 
         it('should test a connection can be cancelled when adding profile', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', [], vscode.ConfigurationTarget.Global);
 
@@ -182,8 +177,6 @@ describe('AddConnectionCommand', () => {
         });
 
         it('should test a connection can be cancelled when adding certificate', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', [], vscode.ConfigurationTarget.Global);
 
@@ -209,8 +202,6 @@ describe('AddConnectionCommand', () => {
         });
 
         it('should test a connection can be cancelled when adding private key', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', [], vscode.ConfigurationTarget.Global);
 

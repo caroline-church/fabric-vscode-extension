@@ -12,26 +12,10 @@
  * limitations under the License.
 */
 
-import { FabricOutputAdapter } from './FabricOutputAdapter';
+export interface OutputAdapter {
 
-export class FabricConsoleOutputAdapter implements FabricOutputAdapter {
+    log(value: string): void;
 
-    public static instance(): FabricConsoleOutputAdapter {
-        return FabricConsoleOutputAdapter._instance;
-    }
-
-    private static _instance: FabricConsoleOutputAdapter = new FabricConsoleOutputAdapter();
-
-    private constructor() {
-
-    }
-
-    log(value: string): void {
-        console.log(value);
-    }
-
-    error(value: string): void {
-        console.error(value);
-    }
+    error(value: string): void;
 
 }

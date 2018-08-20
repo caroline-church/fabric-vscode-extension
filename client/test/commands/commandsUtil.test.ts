@@ -17,11 +17,10 @@ import * as path from 'path';
 import * as chai from 'chai';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
-import { Util } from '../../src/commands/util';
+import { ExtensionUtil } from '../../src/util/ExtensionUtil';
 chai.use(sinonChai);
 
-// Defines a Mocha test suite to group tests of similar kind together
-describe('Command Utility Function Tests', () => {
+describe('Commands Utility Function Tests', () => {
 
     let mySandBox;
 
@@ -31,14 +30,5 @@ describe('Command Utility Function Tests', () => {
 
     afterEach(() => {
         mySandBox.restore();
-    });
-
-    it('should send a shell command', async () => {
-
-        const rootPath = path.dirname(__dirname);
-        const uri: vscode.Uri = vscode.Uri.file(path.join(rootPath, '../../test'));
-        const command = await Util.sendCommand('echo Hyperledgendary', uri.fsPath);
-        command.should.equal('Hyperledgendary');
-
     });
 });

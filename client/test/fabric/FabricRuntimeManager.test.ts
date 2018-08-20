@@ -21,6 +21,7 @@ import * as chai from 'chai';
 import { FabricRuntime } from '../../src/fabric/FabricRuntime';
 import { FabricRuntimeRegistryEntry } from '../../src/fabric/FabricRuntimeRegistryEntry';
 import { FabricConnectionRegistryEntry } from '../../src/fabric/FabricConnectionRegistryEntry';
+import { ExtensionUtil } from '../../src/util/ExtensionUtil';
 
 chai.should();
 
@@ -32,7 +33,7 @@ describe('FabricRuntimeManager', () => {
     const runtimeManager: FabricRuntimeManager = FabricRuntimeManager.instance();
 
     beforeEach(async () => {
-        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
+        await ExtensionUtil.activateExtension();
         await connectionRegistry.clear();
         await runtimeRegistry.clear();
         await runtimeManager.clear();

@@ -15,13 +15,14 @@
 import * as myExtension from '../../src/extension';
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { ConnectionTreeItem } from '../../src/explorer/model/ConnectionTreeItem';
-
 import * as chai from 'chai';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
+
+import { ConnectionTreeItem } from '../../src/explorer/model/ConnectionTreeItem';
 import { ConnectionIdentityTreeItem } from '../../src/explorer/model/ConnectionIdentityTreeItem';
 import { AddConnectionTreeItem } from '../../src/explorer/model/AddConnectionTreeItem';
+import { FabricClientConnection } from '../../src/fabric/FabricClientConnection';
 import { FabricConnection } from '../../src/fabric/FabricConnection';
 import { BlockchainTreeItem } from '../../src/explorer/model/BlockchainTreeItem';
 import { BlockchainNetworkExplorerProvider } from '../../src/explorer/BlockchainNetworkExplorer';
@@ -32,7 +33,9 @@ import { PeerTreeItem } from '../../src/explorer/model/PeerTreeItem';
 import { ChainCodeTreeItem } from '../../src/explorer/model/ChainCodeTreeItem';
 import { InstalledChainCodeTreeItem } from '../../src/explorer/model/InstalledChainCodeTreeItem';
 import { InstalledChainCodeVersionTreeItem } from '../../src/explorer/model/InstalledChaincodeVersionTreeItem';
+import { FabricConnectionFactory } from '../../src/fabric/FabricConnectionFactory';
 import { FabricConnectionManager } from '../../src/fabric/FabricConnectionManager';
+import { ExtensionUtil } from '../../src/util/ExtensionUtil';
 
 chai.use(sinonChai);
 const should = chai.should();
@@ -52,8 +55,10 @@ describe('BlockchainNetworkExplorer', () => {
 
         let mySandBox: sinon.SinonSandbox;
 
-        beforeEach(() => {
+        beforeEach(async () => {
             mySandBox = sinon.createSandbox();
+
+            await ExtensionUtil.activateExtension();
         });
 
         afterEach(() => {
@@ -61,7 +66,6 @@ describe('BlockchainNetworkExplorer', () => {
         });
 
         it('should register for connected events from the connection manager', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
             const blockchainNetworkExplorerProvider: BlockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
             mySandBox.stub(blockchainNetworkExplorerProvider, 'connect').resolves();
             mySandBox.stub(blockchainNetworkExplorerProvider, 'disconnect').resolves();
@@ -72,7 +76,6 @@ describe('BlockchainNetworkExplorer', () => {
         });
 
         it('should display errors from connected events', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
             const blockchainNetworkExplorerProvider: BlockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
             mySandBox.stub(blockchainNetworkExplorerProvider, 'connect').rejects(new Error('wow such error'));
             mySandBox.stub(blockchainNetworkExplorerProvider, 'disconnect').resolves();
@@ -87,7 +90,6 @@ describe('BlockchainNetworkExplorer', () => {
         });
 
         it('should register for disconnected events from the connection manager', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
             const blockchainNetworkExplorerProvider: BlockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
             mySandBox.stub(blockchainNetworkExplorerProvider, 'connect').resolves();
             mySandBox.stub(blockchainNetworkExplorerProvider, 'disconnect').resolves();
@@ -97,7 +99,6 @@ describe('BlockchainNetworkExplorer', () => {
         });
 
         it('should display errors from disconnected events', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
             const blockchainNetworkExplorerProvider: BlockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
             mySandBox.stub(blockchainNetworkExplorerProvider, 'connect').resolves();
             mySandBox.stub(blockchainNetworkExplorerProvider, 'disconnect').rejects(new Error('wow such error'));
@@ -109,7 +110,6 @@ describe('BlockchainNetworkExplorer', () => {
             blockchainNetworkExplorerProvider.disconnect.should.have.been.calledOnceWithExactly();
             showErrorMessageSpy.should.have.been.calledOnceWithExactly('Error handling disconnected event: wow such error');
         });
-
     });
 
     describe('getChildren', () => {
@@ -118,18 +118,17 @@ describe('BlockchainNetworkExplorer', () => {
 
             let mySandBox;
 
-            beforeEach(() => {
+            beforeEach(async () => {
                 mySandBox = sinon.createSandbox();
+
+                await ExtensionUtil.activateExtension();
             });
 
             afterEach(() => {
                 mySandBox.restore();
             });
 
-            it('should test a connection tree is created with add network at the end', async () => {
-
-                await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
+            it('should test a connection tree is created with add connection at the end', async () => {
                 const blockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
                 const allChildren = await blockchainNetworkExplorerProvider.getChildren();
 
@@ -137,14 +136,11 @@ describe('BlockchainNetworkExplorer', () => {
 
                 addNetwork.should.be.instanceOf(AddConnectionTreeItem);
 
-                addNetwork.tooltip.should.equal('Add new network');
-                addNetwork.label.should.equal('Add new network');
+                addNetwork.tooltip.should.equal('Add new connection');
+                addNetwork.label.should.equal('Add new connection');
             });
 
             it('should display connection that has been added in alphabetical order', async () => {
-
-                await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
                 const connections: Array<any> = [];
 
                 const rootPath = path.dirname(__dirname);
@@ -195,12 +191,10 @@ describe('BlockchainNetworkExplorer', () => {
                 allChildren[1].label.should.equal('myConnectionA');
                 allChildren[2].label.should.equal('myConnectionB');
                 allChildren[3].label.should.equal('myConnectionC');
-                allChildren[4].label.should.equal('Add new network');
+                allChildren[4].label.should.equal('Add new connection');
             });
 
             it('should display connections with single identities', async () => {
-                await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
                 const connections: Array<any> = [];
 
                 const rootPath = path.dirname(__dirname);
@@ -233,13 +227,10 @@ describe('BlockchainNetworkExplorer', () => {
                 connectionTreeItem.collapsibleState.should.equal(vscode.TreeItemCollapsibleState.None);
                 connectionTreeItem.connection.should.deep.equal(myConnection);
                 connectionTreeItem.command.should.deep.equal(myCommand);
-                allChildren[1].label.should.equal('Add new network');
+                allChildren[1].label.should.equal('Add new connection');
             });
 
             it('should display connections with multiple identities', async () => {
-
-                await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
                 const connections: Array<any> = [];
 
                 const rootPath = path.dirname(__dirname);
@@ -271,7 +262,7 @@ describe('BlockchainNetworkExplorer', () => {
                 connectionTreeItem.collapsibleState.should.equal(vscode.TreeItemCollapsibleState.Collapsed);
                 connectionTreeItem.connection.should.deep.equal(myConnection);
                 should.not.exist(connectionTreeItem.command);
-                allChildren[1].label.should.equal('Add new network');
+                allChildren[1].label.should.equal('Add new connection');
 
                 const myCommandOne = {
                     command: 'blockchainExplorer.connectEntry',
@@ -302,9 +293,6 @@ describe('BlockchainNetworkExplorer', () => {
             });
 
             it('should throw an error if cert can\'t be parsed with multiple identities', async () => {
-
-                await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
                 const connections: Array<any> = [];
 
                 const rootPath = path.dirname(__dirname);
@@ -338,7 +326,7 @@ describe('BlockchainNetworkExplorer', () => {
                 connectionTreeItem.collapsibleState.should.equal(vscode.TreeItemCollapsibleState.Collapsed);
                 connectionTreeItem.connection.should.deep.equal(myConnection);
                 should.not.exist(connectionTreeItem.command);
-                allChildren[1].label.should.equal('Add new network');
+                allChildren[1].label.should.equal('Add new connection');
 
                 const errorSpy = mySandBox.spy(vscode.window, 'showErrorMessage');
 
@@ -350,8 +338,6 @@ describe('BlockchainNetworkExplorer', () => {
             });
 
             it('should handle error with tree', async () => {
-                await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
                 const connections: Array<any> = [];
 
                 const rootPath = path.dirname(__dirname);
@@ -381,8 +367,6 @@ describe('BlockchainNetworkExplorer', () => {
             });
 
             it('should display managed runtimes with single identities', async () => {
-                await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
                 const connections: Array<any> = [];
 
                 const myConnection = {
@@ -409,7 +393,7 @@ describe('BlockchainNetworkExplorer', () => {
                 connectionTreeItem.collapsibleState.should.equal(vscode.TreeItemCollapsibleState.None);
                 connectionTreeItem.connection.should.deep.equal(myConnection);
                 connectionTreeItem.command.should.deep.equal(myCommand);
-                allChildren[1].label.should.equal('Add new network');
+                allChildren[1].label.should.equal('Add new connection');
             });
 
         });
@@ -419,17 +403,18 @@ describe('BlockchainNetworkExplorer', () => {
             let mySandBox: sinon.SinonSandbox;
             let allChildren: Array<BlockchainTreeItem>;
             let blockchainNetworkExplorerProvider: BlockchainNetworkExplorerProvider;
-            let fabricConnection: sinon.SinonStubbedInstance<FabricConnection>;
+            let fabricConnection;
 
             beforeEach(async () => {
                 mySandBox = sinon.createSandbox();
 
-                await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
+                await ExtensionUtil.activateExtension();
 
                 fabricConnection = sinon.createStubInstance(TestFabricConnection);
 
-                fabricConnection.getAllPeerNames.resolves(['peerOne', 'peerTwo']);
+                fabricConnection.getAllPeerNames.returns(['peerOne', 'peerTwo']);
 
+                fabricConnection.getAllPeerNames.returns(['peerOne', 'peerTwo']);
                 fabricConnection.getAllChannelsForPeer.withArgs('peerOne').resolves(['channelOne', 'channelTwo']);
                 fabricConnection.getAllChannelsForPeer.withArgs('peerTwo').resolves(['channelTwo']);
 
@@ -443,8 +428,14 @@ describe('BlockchainNetworkExplorer', () => {
                 installedChaincodeMapTwo.set('biscuit-network', ['0.7']);
                 fabricConnection.getInstalledChaincode.withArgs('peerTwo').returns(installedChaincodeMapTwo);
 
-                fabricConnection.getInstantiatedChaincode.withArgs('channelOne').resolves([{name: 'biscuit-network', version: '0.7'}]);
-                fabricConnection.getInstantiatedChaincode.withArgs('channelTwo').resolves([{name: 'cake-network', version: '0.10'}]);
+                fabricConnection.getInstantiatedChaincode.withArgs('channelOne').resolves([{
+                    name: 'biscuit-network',
+                    version: '0.7'
+                }]);
+                fabricConnection.getInstantiatedChaincode.withArgs('channelTwo').resolves([{
+                    name: 'cake-network',
+                    version: '0.10'
+                }]);
 
                 blockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
                 blockchainNetworkExplorerProvider['connection'] = ((fabricConnection as any) as FabricConnection);
@@ -513,7 +504,7 @@ describe('BlockchainNetworkExplorer', () => {
 
             it('should not create anything if no peers', async () => {
 
-                fabricConnection.getAllPeerNames.resolves([]);
+                fabricConnection.getAllPeerNames.returns([]);
 
                 allChildren = await blockchainNetworkExplorerProvider.getChildren();
 
@@ -786,8 +777,10 @@ describe('BlockchainNetworkExplorer', () => {
 
         let mySandBox;
 
-        beforeEach(() => {
+        beforeEach(async () => {
             mySandBox = sinon.createSandbox();
+
+            await ExtensionUtil.activateExtension();
         });
 
         afterEach(() => {
@@ -795,8 +788,6 @@ describe('BlockchainNetworkExplorer', () => {
         });
 
         it('should test the tree is refreshed when the refresh command is run', async () => {
-
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
 
             const blockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
 
@@ -811,8 +802,6 @@ describe('BlockchainNetworkExplorer', () => {
 
             const mockTreeItem = sinon.createStubInstance(ConnectionTreeItem);
 
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             const blockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
 
             const onDidChangeTreeDataSpy = mySandBox.spy(blockchainNetworkExplorerProvider['_onDidChangeTreeData'], 'fire');
@@ -821,15 +810,16 @@ describe('BlockchainNetworkExplorer', () => {
 
             onDidChangeTreeDataSpy.should.have.been.calledOnceWithExactly(mockTreeItem);
         });
-
     });
 
     describe('connect', () => {
 
         let mySandBox: sinon.SinonSandbox;
 
-        beforeEach(() => {
+        beforeEach(async () => {
             mySandBox = sinon.createSandbox();
+
+            await ExtensionUtil.activateExtension();
         });
 
         afterEach(() => {
@@ -837,8 +827,6 @@ describe('BlockchainNetworkExplorer', () => {
         });
 
         it('should set the current client connection', async () => {
-
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
 
             const blockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
 
@@ -863,8 +851,10 @@ describe('BlockchainNetworkExplorer', () => {
 
         let mySandBox;
 
-        beforeEach(() => {
+        beforeEach(async () => {
             mySandBox = sinon.createSandbox();
+
+            await ExtensionUtil.activateExtension();
         });
 
         afterEach(() => {
@@ -896,8 +886,10 @@ describe('BlockchainNetworkExplorer', () => {
 
         let mySandBox;
 
-        beforeEach(() => {
+        beforeEach(async () => {
             mySandBox = sinon.createSandbox();
+
+            await ExtensionUtil.activateExtension();
         });
 
         afterEach(() => {
@@ -905,8 +897,6 @@ describe('BlockchainNetworkExplorer', () => {
         });
 
         it('should get a tree item', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             const connections: Array<any> = [];
 
             const rootPath = path.dirname(__dirname);

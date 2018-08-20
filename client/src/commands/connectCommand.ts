@@ -13,23 +13,21 @@
 */
 'use strict';
 import * as vscode from 'vscode';
-import { Util } from './util';
-import { FabricClientConnection } from '../fabric/FabricClientConnection';
-import { ParsedCertificate } from '../parsedCertificate';
-import { getBlockchainNetworkExplorerProvider } from '../extension';
+import { CommandsUtil } from './commandsUtil';
+import { IFabricConnection } from '../fabric/IFabricConnection';
+import { ParsedCertificate } from '../fabric/ParsedCertificate';
+import { FabricConnectionFactory } from '../fabric/FabricConnectionFactory';
 import { FabricConnectionManager } from '../fabric/FabricConnectionManager';
 import { FabricConnectionRegistryEntry } from '../fabric/FabricConnectionRegistryEntry';
 import { FabricConnectionRegistry } from '../fabric/FabricConnectionRegistry';
-import { FabricConnection } from '../fabric/FabricConnection';
 import { FabricRuntimeManager } from '../fabric/FabricRuntimeManager';
-import { FabricRuntimeConnection } from '../fabric/FabricRuntimeConnection';
 import { FabricRuntime } from '../fabric/FabricRuntime';
 
 export async function connect(connectionName: string, identityName?: string): Promise<void> {
     console.log('connect', connectionName, identityName);
 
     if (!connectionName) {
-        connectionName = await Util.showConnectionQuickPickBox('Choose a connection to connect with');
+        connectionName = await CommandsUtil.showConnectionQuickPickBox('Choose a connection to connect with');
         if (!connectionName) {
             return;
         }
@@ -42,12 +40,12 @@ export async function connect(connectionName: string, identityName?: string): Pr
     }
     const connectionRegistryEntry: FabricConnectionRegistryEntry = connectionRegistry.get(connectionName);
 
-    let connection: FabricConnection;
+    let connection: IFabricConnection;
     if (connectionRegistryEntry.managedRuntime) {
 
         const runtimeManager: FabricRuntimeManager = FabricRuntimeManager.instance();
         const runtime: FabricRuntime = runtimeManager.get(connectionName);
-        connection = new FabricRuntimeConnection(runtime);
+        connection = FabricConnectionFactory.createFabricRuntimeConnection(runtime);
 
     } else {
 
@@ -61,7 +59,7 @@ export async function connect(connectionName: string, identityName?: string): Pr
         if (connectionRegistryEntry.identities.length > 1) {
 
             if (!identityName) {
-                identityName = await Util.showIdentityConnectionQuickPickBox('Choose an identity to connect with', connectionRegistryEntry);
+                identityName = await CommandsUtil.showIdentityConnectionQuickPickBox('Choose an identity to connect with', connectionRegistryEntry);
                 if (!identityName) {
                     return;
                 }
@@ -84,7 +82,7 @@ export async function connect(connectionName: string, identityName?: string): Pr
         connectionData.certificatePath = foundIdentity.certificatePath;
         connectionData.privateKeyPath = foundIdentity.privateKeyPath;
 
-        connection = new FabricClientConnection(connectionData);
+        connection = FabricConnectionFactory.createFabricClientConnection(connectionData);
 
     }
 
@@ -95,5 +93,4 @@ export async function connect(connectionName: string, identityName?: string): Pr
         vscode.window.showErrorMessage(error.message);
         throw error;
     }
-
 }

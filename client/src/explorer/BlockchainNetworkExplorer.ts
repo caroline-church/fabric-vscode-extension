@@ -16,8 +16,8 @@
 'use strict';
 import * as vscode from 'vscode';
 
-import { FabricConnection } from '../fabric/FabricConnection';
-import { ParsedCertificate } from '../parsedCertificate';
+import { IFabricConnection } from '../fabric/IFabricConnection';
+import { ParsedCertificate } from '../fabric/ParsedCertificate';
 
 import { PeerTreeItem } from './model/PeerTreeItem';
 import { ChannelTreeItem } from './model/ChannelTreeItem';
@@ -44,12 +44,12 @@ export class BlockchainNetworkExplorerProvider implements BlockchainExplorerProv
     // tslint:disable-next-line member-ordering
     readonly onDidChangeTreeData: vscode.Event<any | undefined> = this._onDidChangeTreeData.event;
 
-    private connection: FabricConnection = null;
+    private connection: IFabricConnection = null;
 
     private connectionRegistryManager: FabricConnectionRegistry = FabricConnectionRegistry.instance();
 
     constructor() {
-        FabricConnectionManager.instance().on('connected', async (connection: FabricConnection) => {
+        FabricConnectionManager.instance().on('connected', async (connection: IFabricConnection) => {
             try {
                 await this.connect(connection);
             } catch (error) {
@@ -70,7 +70,7 @@ export class BlockchainNetworkExplorerProvider implements BlockchainExplorerProv
         this._onDidChangeTreeData.fire(element);
     }
 
-    async connect(connection: FabricConnection): Promise<void> {
+    async connect(connection: IFabricConnection): Promise<void> {
         console.log('connect', connection);
         this.connection = connection;
         // This controls which menu buttons appear
@@ -308,7 +308,7 @@ export class BlockchainNetworkExplorerProvider implements BlockchainExplorerProv
             }
         });
 
-        tree.push(new AddConnectionTreeItem(this, 'Add new network', {
+        tree.push(new AddConnectionTreeItem(this, 'Add new connection', {
             command: 'blockchainExplorer.addConnectionEntry',
             title: ''
         }));

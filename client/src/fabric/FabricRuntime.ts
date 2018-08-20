@@ -12,16 +12,14 @@
  * limitations under the License.
 */
 
-import * as child_process from 'child_process';
 import Dockerode = require('dockerode');
 import * as path from 'path';
-import * as fs from 'fs';
+import * as fs from 'fs-extra';
 import { FabricRuntimeRegistryEntry } from './FabricRuntimeRegistryEntry';
 import { FabricRuntimeRegistry } from './FabricRuntimeRegistry';
-import * as vscode from 'vscode';
-import stripAnsi = require('strip-ansi');
-import { FabricOutputAdapter } from './FabricOutputAdapter';
-import { FabricConsoleOutputAdapter } from './FabricConsoleOutputAdapter';
+import { OutputAdapter } from '../logging/OutputAdapter';
+import { ConsoleOutputAdapter } from '../logging/ConsoleOutputAdapter';
+import { CommandUtil } from '../util/CommandUtil';
 
 const basicNetworkPath = path.resolve(__dirname, '..', '..', '..', 'basic-network');
 const basicNetworkConnectionProfilePath = path.resolve(basicNetworkPath, 'connection.json');
@@ -59,7 +57,7 @@ export class FabricRuntime {
         return this.busy;
     }
 
-    public async start(outputAdapter?: FabricOutputAdapter): Promise<void> {
+    public async start(outputAdapter?: OutputAdapter): Promise<void> {
         try {
             this.busy = true;
             await this.execute('start.sh', outputAdapter);
@@ -68,7 +66,7 @@ export class FabricRuntime {
         }
     }
 
-    public async stop(outputAdapter?: FabricOutputAdapter): Promise<void> {
+    public async stop(outputAdapter?: OutputAdapter): Promise<void> {
         try {
             this.busy = true;
             await this.execute('stop.sh', outputAdapter);
@@ -78,7 +76,7 @@ export class FabricRuntime {
         }
     }
 
-    public async restart(outputAdapter?: FabricOutputAdapter): Promise<void> {
+    public async restart(outputAdapter?: OutputAdapter): Promise<void> {
         await this.stop(outputAdapter);
         await this.start(outputAdapter);
     }
@@ -129,35 +127,18 @@ export class FabricRuntime {
         await this.runtimeRegistry.update(this.runtimeRegistryEntry);
     }
 
-    private async execute(script: string, outputAdapter?: FabricOutputAdapter): Promise<void> {
+    private execute(script: string, outputAdapter?: OutputAdapter): Promise<void> {
         if (!outputAdapter) {
-            outputAdapter = FabricConsoleOutputAdapter.instance();
+            outputAdapter = ConsoleOutputAdapter.instance();
         }
-        const child: child_process.ChildProcess = child_process.spawn('/bin/sh', [ script ], {
-            cwd: basicNetworkPath,
-            env: Object.assign({}, process.env, {
-                COMPOSE_PROJECT_NAME: `fabric-vscode-${this.name}`,
-                FABRIC_RUNTIME_NAME: this.name,
-                CORE_CHAINCODE_MODE: this.runtimeRegistryEntry.developmentMode ? 'dev' : 'net'
-            })
+
+        const env: any = Object.assign({}, process.env, {
+            COMPOSE_PROJECT_NAME: `fabric-vscode-${this.name}`,
+            FABRIC_RUNTIME_NAME: this.name,
+            CORE_CHAINCODE_MODE: this.runtimeRegistryEntry.developmentMode ? 'dev' : 'net'
         });
-        child.stdout.on('data', (data) => {
-            const str = stripAnsi(data.toString());
-            str.replace(/\n$/, '').split('\n').forEach((line) => outputAdapter.log(`${script} : ${line}`));
-        });
-        child.stderr.on('data', (data) => {
-            const str = stripAnsi(data.toString());
-            str.replace(/\n$/, '').split('\n').forEach((line) => outputAdapter.error(`${script} : ${line}`));
-        });
-        return new Promise<void>((resolve, reject) => {
-            child.on('error', reject);
-            child.on('exit', (code, signal) => {
-                if (code) {
-                    return reject(new Error(`Failed to execute script "${script}" with return code ${code}`));
-                }
-                resolve();
-            });
-        });
+
+        return CommandUtil.sendCommandWithOutput('/bin/sh', [ script ], basicNetworkPath, env, outputAdapter);
     }
 
     private async getContainerPorts(containerID: string): Promise<ContainerPorts> {
