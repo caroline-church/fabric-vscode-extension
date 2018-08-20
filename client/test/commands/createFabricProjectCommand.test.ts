@@ -132,4 +132,15 @@ describe('CreateFabricProjectCommand', () => {
         await vscode.commands.executeCommand('createFabricProjectEntry');
         errorSpy.should.have.been.calledWith('Issue creating fabric project');
     });
+
+    it('should should not do anything if the user cancels the open dialog', async () => {
+        // We actually want to execute the command!
+        sendCommandStub.restore();
+        openDialogStub.resolves(undefined);
+        await vscode.commands.executeCommand('createFabricProjectEntry');
+        openDialogStub.should.have.been.calledOnce;
+        executeCommandStub.should.have.been.calledOnce;
+        executeCommandStub.should.have.not.been.calledWith('vscode.openFolder');
+    });
+
 }); // end of createFabricCommand tests

@@ -54,7 +54,6 @@ describe('Extension Tests', () => {
             'blockchainExplorer.addConnectionEntry',
             'blockchainExplorer.deleteConnectionEntry',
             'blockchainExplorer.addConnectionIdentityEntry',
-            'blockchainExplorer.testEntry',
             'blockchainAPackageExplorer.refreshEntry']);
 
         // Don't need this if createFabricProject is renamed
