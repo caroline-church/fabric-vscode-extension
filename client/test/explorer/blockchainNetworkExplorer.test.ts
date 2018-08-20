@@ -192,16 +192,10 @@ describe('BlockchainNetworkExplorer', () => {
                 const blockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
                 const allChildren = await blockchainNetworkExplorerProvider.getChildren();
 
-                const myCommandConnection = {
-                    connectionProfilePath: myConnection.connectionProfilePath,
-                    certificatePath: myConnection.identities[0].certificatePath,
-                    privateKeyPath: myConnection.identities[0].privateKeyPath
-                };
-
                 const myCommand = {
                     command: 'blockchainExplorer.connectEntry',
                     title: '',
-                    arguments: [myCommandConnection]
+                    arguments: ['myConnection']
                 };
 
                 allChildren.length.should.equal(2);
@@ -234,20 +228,6 @@ describe('BlockchainNetworkExplorer', () => {
                         }]
                 };
 
-                const myConnectionIdentityOne = {
-                    name: myConnection.name,
-                    connectionProfilePath: myConnection.connectionProfilePath,
-                    certificatePath: myConnection.identities[0].certificatePath,
-                    privateKeyPath: myConnection.identities[0].privateKeyPath
-                };
-
-                const myConnectionIdentityTwo = {
-                    name: myConnection.name,
-                    connectionProfilePath: myConnection.connectionProfilePath,
-                    certificatePath: myConnection.identities[1].certificatePath,
-                    privateKeyPath: myConnection.identities[1].privateKeyPath
-                };
-
                 connections.push(myConnection);
 
                 await vscode.workspace.getConfiguration().update('fabric.connections', connections, vscode.ConfigurationTarget.Global);
@@ -267,13 +247,13 @@ describe('BlockchainNetworkExplorer', () => {
                 const myCommandOne = {
                     command: 'blockchainExplorer.connectEntry',
                     title: '',
-                    arguments: [myConnectionIdentityOne]
+                    arguments: ['myConnection', 'Admin@org1.example.com']
                 };
 
                 const myCommandTwo = {
                     command: 'blockchainExplorer.connectEntry',
                     title: '',
-                    arguments: [myConnectionIdentityTwo]
+                    arguments: ['myConnection', 'Admin@org1.example.com']
                 };
 
                 const identityChildren = await blockchainNetworkExplorerProvider.getChildren(connectionTreeItem);
@@ -370,6 +350,39 @@ describe('BlockchainNetworkExplorer', () => {
 
                 errorSpy.should.have.been.calledWith('some error');
             });
+
+            it('should display managed runtimes with single identities', async () => {
+                await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
+
+                const connections: Array<any> = [];
+
+                const myConnection = {
+                    name: 'myRuntimeConnection',
+                    managedRuntime: true
+                };
+
+                connections.push(myConnection);
+
+                await vscode.workspace.getConfiguration().update('fabric.connections', connections, vscode.ConfigurationTarget.Global);
+
+                const blockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
+                const allChildren = await blockchainNetworkExplorerProvider.getChildren();
+
+                const myCommand = {
+                    command: 'blockchainExplorer.connectEntry',
+                    title: '',
+                    arguments: ['myRuntimeConnection']
+                };
+
+                allChildren.length.should.equal(2);
+                const connectionTreeItem = allChildren[0] as ConnectionTreeItem;
+                connectionTreeItem.label.should.equal('myRuntimeConnection');
+                connectionTreeItem.collapsibleState.should.equal(vscode.TreeItemCollapsibleState.None);
+                connectionTreeItem.connection.should.deep.equal(myConnection);
+                connectionTreeItem.command.should.deep.equal(myCommand);
+                allChildren[1].label.should.equal('Add new network');
+            });
+
         });
 
         describe('connected tree', () => {

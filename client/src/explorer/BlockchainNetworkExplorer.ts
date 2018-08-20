@@ -33,6 +33,8 @@ import { InstalledChainCodeTreeItem } from './model/InstalledChainCodeTreeItem';
 import { InstalledChainCodeVersionTreeItem } from './model/InstalledChaincodeVersionTreeItem';
 import { FabricConnectionManager } from '../fabric/FabricConnectionManager';
 import { BlockchainExplorerProvider } from './BlockchainExplorerProvider';
+import { FabricConnectionRegistryEntry } from '../fabric/FabricConnectionRegistryEntry';
+import { FabricConnectionRegistry } from '../fabric/FabricConnectionRegistry';
 
 export class BlockchainNetworkExplorerProvider implements BlockchainExplorerProvider {
 
@@ -44,6 +46,8 @@ export class BlockchainNetworkExplorerProvider implements BlockchainExplorerProv
     readonly onDidChangeTreeData: vscode.Event<any | undefined> = this._onDidChangeTreeData.event;
 
     private connection: FabricConnection = null;
+
+    private connectionRegistryManager: FabricConnectionRegistry = FabricConnectionRegistry.instance();
 
     constructor() {
         FabricConnectionManager.instance().on('connected', async (connection: FabricConnection) => {
@@ -247,26 +251,19 @@ export class BlockchainNetworkExplorerProvider implements BlockchainExplorerProv
         });
     }
 
-    private createConnectionIdentityTree(element: ConnectionTreeItem): Promise<ConnectionIdentityTreeItem[]> {
+    private async createConnectionIdentityTree(element: ConnectionTreeItem): Promise<ConnectionIdentityTreeItem[]> {
         console.log('createConnectionIdentityTree', element);
         const tree: Array<ConnectionIdentityTreeItem> = [];
 
-        element.connection.identities.forEach((identity) => {
+        for (const identity of element.connection.identities) {
             try {
                 const cert: ParsedCertificate = new ParsedCertificate(identity.certificatePath);
                 const commonName: string = cert.getCommonName();
 
-                const fabricConnection = {
-                    name: element.connection.name,
-                    connectionProfilePath: element.connection.connectionProfilePath,
-                    certificatePath: identity.certificatePath,
-                    privateKeyPath: identity.privateKeyPath
-                };
-
                 const command = {
                     command: 'blockchainExplorer.connectEntry',
                     title: '',
-                    arguments: [fabricConnection]
+                    arguments: [element.connection.name, commonName]
                 };
 
                 tree.push(new ConnectionIdentityTreeItem(this, commonName, command));
@@ -274,36 +271,29 @@ export class BlockchainNetworkExplorerProvider implements BlockchainExplorerProv
             } catch (error) {
                 vscode.window.showErrorMessage('Error parsing certificate ' + error.message);
             }
-        });
+        }
 
-        return Promise.resolve(tree);
+        return tree;
     }
 
-    private createConnectionTree(): Promise<BlockchainTreeItem[]> {
+    private async createConnectionTree(): Promise<BlockchainTreeItem[]> {
         console.log('createdConnectionTree');
-        const tree: Array<BlockchainTreeItem> = [];
+        const tree: BlockchainTreeItem[] = [];
 
-        const allConnections: Array<any> = this.getNetworkConnection();
+        const allConnections: FabricConnectionRegistryEntry[] = this.connectionRegistryManager.getAll();
 
-        allConnections.forEach((connection) => {
+        for (const connection of allConnections) {
 
             let collapsibleState: vscode.TreeItemCollapsibleState;
             let command: vscode.Command;
-
-            if (connection.identities.length > 1) {
+            if (connection.identities && connection.identities.length > 1) {
                 collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
             } else {
-                const fabricConnection = {
-                    connectionProfilePath: connection.connectionProfilePath,
-                    certificatePath: connection.identities[0].certificatePath,
-                    privateKeyPath: connection.identities[0].privateKeyPath
-                };
-
                 collapsibleState = vscode.TreeItemCollapsibleState.None;
                 command = {
                     command: 'blockchainExplorer.connectEntry',
                     title: '',
-                    arguments: [fabricConnection]
+                    arguments: [connection.name]
                 };
             }
 
@@ -312,7 +302,7 @@ export class BlockchainNetworkExplorerProvider implements BlockchainExplorerProv
                 connection,
                 collapsibleState,
                 command));
-        });
+        }
 
         tree.sort((connectionA, connectionB) => {
             if (connectionA.label > connectionB.label) {
@@ -329,11 +319,6 @@ export class BlockchainNetworkExplorerProvider implements BlockchainExplorerProv
             title: ''
         }));
 
-        return Promise.resolve(tree);
-    }
-
-    private getNetworkConnection(): Array<any> {
-        console.log('getNetworkConnection');
-        return vscode.workspace.getConfiguration().get('fabric.connections');
+        return tree;
     }
 }

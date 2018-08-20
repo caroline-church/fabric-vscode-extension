@@ -27,7 +27,7 @@ export class FabricClientConnection extends FabricConnection {
     private certificatePath: string;
     private privateKeyPath: string;
 
-    constructor(connectionData) {
+    constructor(connectionData: { connectionProfilePath: string, certificatePath: string, privateKeyPath: string }) {
         super();
         this.connectionProfilePath = connectionData.connectionProfilePath;
         this.certificatePath = connectionData.certificatePath;

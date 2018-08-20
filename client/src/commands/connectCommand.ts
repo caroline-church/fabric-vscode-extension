@@ -18,41 +18,57 @@ import { FabricClientConnection } from '../fabric/FabricClientConnection';
 import { ParsedCertificate } from '../parsedCertificate';
 import { getBlockchainNetworkExplorerProvider } from '../extension';
 import { FabricConnectionManager } from '../fabric/FabricConnectionManager';
+import { FabricConnectionRegistryEntry } from '../fabric/FabricConnectionRegistryEntry';
+import { FabricConnectionRegistry } from '../fabric/FabricConnectionRegistry';
+import { FabricConnection } from '../fabric/FabricConnection';
+import { FabricRuntimeManager } from '../fabric/FabricRuntimeManager';
+import { FabricRuntimeConnection } from '../fabric/FabricRuntimeConnection';
 
-export async function connect(connection: any): Promise<void> {
-    console.log('connect');
+export async function connect(connectionName: string, identityName?: string): Promise<void> {
+    console.log('connect', connectionName, identityName);
 
-    if (!connection) {
-        const connectionName: string = await Util.showConnectionQuickPickBox('Choose a connection to connect with');
-
+    if (!connectionName) {
+        connectionName = await Util.showConnectionQuickPickBox('Choose a connection to connect with');
         if (!connectionName) {
             return;
         }
+    }
 
-        const connections: Array<any> = vscode.workspace.getConfiguration().get('fabric.connections');
-        const connectionConfig: any = connections.find((conn) => {
-            return conn.name === connectionName;
-        });
+    const connectionRegistry: FabricConnectionRegistry = FabricConnectionRegistry.instance();
+    if (!connectionRegistry.exists(connectionName)) {
+        vscode.window.showErrorMessage('Could not connect as no connection found');
+        return;
+    }
+    const connectionRegistryEntry: FabricConnectionRegistryEntry = connectionRegistry.get(connectionName);
 
-        if (!connectionConfig) {
-            vscode.window.showErrorMessage('Could not connect as no connection found');
-            return;
-        }
+    let connection: FabricConnection;
+    if (connectionRegistryEntry.managedRuntime) {
 
-        connection = {
-            connectionProfilePath: connectionConfig.connectionProfilePath
+        const runtimeManager = FabricRuntimeManager.instance();
+        const runtime = runtimeManager.get(connectionName);
+        connection = new FabricRuntimeConnection(runtime);
+
+    } else {
+
+        const connectionData = {
+            connectionProfilePath: connectionRegistryEntry.connectionProfilePath,
+            privateKeyPath: null,
+            certificatePath: null
         };
 
-        if (connectionConfig.identities.length > 1) {
-            const identityName = await Util.showIdentityConnectionQuickPickBox('Choose an identity to connect with', connectionConfig);
+        let foundIdentity: { certificatePath: string, privateKeyPath: string };
+        if (connectionRegistryEntry.identities.length > 1) {
 
             if (!identityName) {
-                return;
+                identityName = await Util.showIdentityConnectionQuickPickBox('Choose an identity to connect with', connectionRegistryEntry);
+                if (!identityName) {
+                    return;
+                }
             }
 
-            const foundIdentity = connectionConfig.identities.find(((identity) => {
-                const parsedCert: any = new ParsedCertificate(identity.certificatePath);
-                return parsedCert.getCommonName() === identityName;
+            foundIdentity = connectionRegistryEntry.identities.find(((identity: { certificatePath: string, privateKeyPath: string }) => {
+                const parsedCertificate: ParsedCertificate = new ParsedCertificate(identity.certificatePath);
+                return parsedCertificate.getCommonName() === identityName;
             }));
 
             if (!foundIdentity) {
@@ -60,20 +76,23 @@ export async function connect(connection: any): Promise<void> {
                 return;
             }
 
-            connection.certificatePath = foundIdentity.certificatePath;
-            connection.privateKeyPath = foundIdentity.privateKeyPath;
         } else {
-            connection.certificatePath = connectionConfig.identities[0].certificatePath;
-            connection.privateKeyPath = connectionConfig.identities[0].privateKeyPath;
+            foundIdentity = connectionRegistryEntry.identities[0];
         }
+
+        connectionData.certificatePath = foundIdentity.certificatePath;
+        connectionData.privateKeyPath = foundIdentity.privateKeyPath;
+
+        connection = new FabricClientConnection(connectionData);
+
     }
 
     try {
-        const fabricConnection: FabricClientConnection = new FabricClientConnection(connection);
-        await fabricConnection.connect();
-        FabricConnectionManager.instance().connect(fabricConnection);
+        await connection.connect();
+        FabricConnectionManager.instance().connect(connection);
     } catch (error) {
         vscode.window.showErrorMessage(error.message);
         throw error;
     }
+
 }
