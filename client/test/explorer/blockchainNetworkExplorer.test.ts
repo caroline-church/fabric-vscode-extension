@@ -71,6 +71,21 @@ describe('BlockchainNetworkExplorer', () => {
             blockchainNetworkExplorerProvider.connect.should.have.been.calledOnceWithExactly(mockConnection);
         });
 
+        it('should display errors from connected events', async () => {
+            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
+            const blockchainNetworkExplorerProvider: BlockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
+            mySandBox.stub(blockchainNetworkExplorerProvider, 'connect').rejects(new Error('wow such error'));
+            mySandBox.stub(blockchainNetworkExplorerProvider, 'disconnect').resolves();
+            const mockConnection: sinon.SinonStubbedInstance<TestFabricConnection> = sinon.createStubInstance(TestFabricConnection);
+            const connectionManager: FabricConnectionManager = FabricConnectionManager.instance();
+            const showErrorMessageSpy: sinon.SinonSpy = mySandBox.spy(vscode.window, 'showErrorMessage');
+            connectionManager.emit('connected', mockConnection);
+            // Need to ensure the event handler gets a chance to run.
+            await new Promise((resolve, reject) => setTimeout(resolve, 50));
+            blockchainNetworkExplorerProvider.connect.should.have.been.calledOnceWithExactly(mockConnection);
+            showErrorMessageSpy.should.have.been.calledOnceWithExactly('Error handling connected event: wow such error');
+        });
+
         it('should register for disconnected events from the connection manager', async () => {
             await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
             const blockchainNetworkExplorerProvider: BlockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
@@ -79,6 +94,20 @@ describe('BlockchainNetworkExplorer', () => {
             const connectionManager: FabricConnectionManager = FabricConnectionManager.instance();
             connectionManager.emit('disconnected');
             blockchainNetworkExplorerProvider.disconnect.should.have.been.calledOnceWithExactly();
+        });
+
+        it('should display errors from disconnected events', async () => {
+            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
+            const blockchainNetworkExplorerProvider: BlockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
+            mySandBox.stub(blockchainNetworkExplorerProvider, 'connect').resolves();
+            mySandBox.stub(blockchainNetworkExplorerProvider, 'disconnect').rejects(new Error('wow such error'));
+            const connectionManager: FabricConnectionManager = FabricConnectionManager.instance();
+            const showErrorMessageSpy: sinon.SinonSpy = mySandBox.spy(vscode.window, 'showErrorMessage');
+            connectionManager.emit('disconnected');
+            // Need to ensure the event handler gets a chance to run.
+            await new Promise((resolve, reject) => setTimeout(resolve, 50));
+            blockchainNetworkExplorerProvider.disconnect.should.have.been.calledOnceWithExactly();
+            showErrorMessageSpy.should.have.been.calledOnceWithExactly('Error handling disconnected event: wow such error');
         });
 
     });
