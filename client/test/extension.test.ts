@@ -88,4 +88,23 @@ describe('Extension Tests', () => {
 
         treeSpy.should.have.been.called;
     });
+
+    it('should refresh the tree when a runtime is added', async () => {
+        await vscode.workspace.getConfiguration().update('fabric.runtimes', [], vscode.ConfigurationTarget.Global);
+
+        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
+
+        const treeDataProvider = myExtension.getBlockchainNetworkExplorerProvider();
+
+        const treeSpy = mySandBox.spy(treeDataProvider['_onDidChangeTreeData'], 'fire');
+
+        const myRuntime = {
+            name: 'myRuntime',
+            developmentMode: false
+        };
+
+        await vscode.workspace.getConfiguration().update('fabric.runtimes', [myRuntime], vscode.ConfigurationTarget.Global);
+
+        treeSpy.should.have.been.called;
+    });
 });

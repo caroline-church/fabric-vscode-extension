@@ -34,7 +34,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.window.registerTreeDataProvider('blockchainExplorer', blockchainNetworkExplorerProvider);
     vscode.window.registerTreeDataProvider('blockchainAPackageExplorer', blockchainPackageExplorerProvider);
     vscode.commands.registerCommand('blockchainExplorer.refreshEntry', (element) => blockchainNetworkExplorerProvider.refresh(element));
-    vscode.commands.registerCommand('blockchainExplorer.connectEntry', (connection) => connect(connection));
+    vscode.commands.registerCommand('blockchainExplorer.connectEntry', (connectionName, identityName) => connect(connectionName, identityName));
     vscode.commands.registerCommand('blockchainExplorer.disconnectEntry', () => blockchainNetworkExplorerProvider.disconnect());
     vscode.commands.registerCommand('blockchainExplorer.addConnectionEntry', addConnection);
     vscode.commands.registerCommand('blockchainExplorer.deleteConnectionEntry', (connection) => deleteConnection(connection));
@@ -45,7 +45,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration((e) => {
 
-        if (e.affectsConfiguration('fabric.connections')) {
+        if (e.affectsConfiguration('fabric.connections') || e.affectsConfiguration('fabric.runtimes')) {
             return vscode.commands.executeCommand('blockchainExplorer.refreshEntry');
         }
     }));

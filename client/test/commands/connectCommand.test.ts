@@ -24,6 +24,10 @@ import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { BlockchainTreeItem } from '../../src/explorer/model/BlockchainTreeItem';
 import { ConnectionTreeItem } from '../../src/explorer/model/ConnectionTreeItem';
+import { ConnectionIdentityTreeItem } from '../../src/explorer/model/ConnectionIdentityTreeItem';
+import { FabricRuntimeConnection } from '../../src/fabric/FabricRuntimeConnection';
+import { FabricRuntime } from '../../src/fabric/FabricRuntime';
+import { FabricRuntimeManager } from '../../src/fabric/FabricRuntimeManager';
 
 chai.should();
 chai.use(sinonChai);
@@ -171,7 +175,7 @@ describe('ConnectCommand', () => {
             await vscode.commands.executeCommand('blockchainExplorer.connectEntry');
         });
 
-        it('should test the a fabric can be connected to from the tree', async () => {
+        it('should test the a fabric with a single identity can be connected to from the tree', async () => {
             await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
 
             const rootPath = path.dirname(__dirname);
@@ -197,13 +201,45 @@ describe('ConnectCommand', () => {
 
             const connectStub = mySandBox.stub(myExtension.getBlockchainNetworkExplorerProvider(), 'connect');
 
-            const myConnection = {
-                connectionProfilePath: myConnectionItem.connection.connectionProfilePath,
-                certificatePath: myConnectionItem.connection.identities[0].certificatePath,
-                privateKeyPath: myConnectionItem.connection.identities[0].privateKeyPath
-            };
+            await vscode.commands.executeCommand(myConnectionItem.command.command, ...myConnectionItem.command.arguments);
 
-            await vscode.commands.executeCommand('blockchainExplorer.connectEntry', myConnection);
+            loadFromConfigStub.should.have.been.called;
+
+            connectStub.should.have.been.calledOnceWithExactly(sinon.match.instanceOf(FabricClientConnection));
+        });
+
+        it('should test the a fabric with multiple identities can be connected to from the tree', async () => {
+            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
+
+            const rootPath = path.dirname(__dirname);
+
+            const connections = [{
+                name: 'myConnection',
+                connectionProfilePath: path.join(rootPath, '../../test/data/connectionOne/connection.json'),
+                identities: [{
+                    certificatePath: path.join(rootPath, '../../test/data/connectionOne/credentials/certificate'),
+                    privateKeyPath: path.join(rootPath, '../../test/data/connectionOne/credentials/privateKey')
+                }, {
+                    certificatePath: path.join(rootPath, '../../test/data/connectionTwo/credentials/certificate'),
+                    privateKeyPath: path.join(rootPath, '../../test/data/connectionTwo/credentials/privateKey')
+                }]
+            }];
+
+            // reset the available connections
+            await vscode.workspace.getConfiguration().update('fabric.connections', connections, vscode.ConfigurationTarget.Global);
+
+            const blockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
+            const allChildren: Array<BlockchainTreeItem> = await blockchainNetworkExplorerProvider.getChildren();
+
+            const myConnectionItem: ConnectionTreeItem = allChildren[0] as ConnectionTreeItem;
+            const allIdentityChildren: ConnectionIdentityTreeItem[] = await blockchainNetworkExplorerProvider.getChildren(myConnectionItem) as ConnectionIdentityTreeItem[];
+            const myIdentityItem: ConnectionIdentityTreeItem = allIdentityChildren[1] as ConnectionIdentityTreeItem;
+
+            const loadFromConfigStub = mySandBox.stub(fabricClient, 'loadFromConfig').returns(fabricClientMock);
+
+            const connectStub = mySandBox.stub(myExtension.getBlockchainNetworkExplorerProvider(), 'connect');
+
+            await vscode.commands.executeCommand(myIdentityItem.command.command, ...myIdentityItem.command.arguments);
 
             loadFromConfigStub.should.have.been.called;
 
@@ -302,5 +338,75 @@ describe('ConnectCommand', () => {
 
             errorMessageSpy.should.have.been.calledWith('some error');
         });
+
+        it('should connect to a managed runtime using a quick pick', async () => {
+            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
+
+            const connections = [{
+                name: 'myRuntime',
+                managedRuntime: true
+            }];
+
+            const runtimes = [{
+                name: 'myRuntime',
+                developmentMode: false
+            }];
+
+            // reset the available connections
+            await vscode.workspace.getConfiguration().update('fabric.connections', connections, vscode.ConfigurationTarget.Global);
+            await vscode.workspace.getConfiguration().update('fabric.runtimes', runtimes, vscode.ConfigurationTarget.Global);
+
+            mySandBox.stub(vscode.window, 'showQuickPick').resolves('myRuntime');
+
+            const loadFromConfigStub = mySandBox.stub(fabricClient, 'loadFromConfig').returns(fabricClientMock);
+
+            const connectStub = mySandBox.stub(myExtension.getBlockchainNetworkExplorerProvider(), 'connect');
+
+            const mockRuntime = sinon.createStubInstance(FabricRuntime);
+            mySandBox.stub(FabricRuntimeManager.instance(), 'get').withArgs('myRuntime').returns(mockRuntime);
+
+            await vscode.commands.executeCommand('blockchainExplorer.connectEntry');
+
+            loadFromConfigStub.should.have.been.called;
+
+            connectStub.should.have.been.calledOnceWithExactly(sinon.match.instanceOf(FabricRuntimeConnection));
+        });
+
+        it('should connect to a managed runtime from the tree', async () => {
+            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
+
+            const connections = [{
+                name: 'myRuntime',
+                managedRuntime: true
+            }];
+
+            const runtimes = [{
+                name: 'myRuntime',
+                developmentMode: false
+            }];
+
+            // reset the available connections
+            await vscode.workspace.getConfiguration().update('fabric.connections', connections, vscode.ConfigurationTarget.Global);
+            await vscode.workspace.getConfiguration().update('fabric.runtimes', runtimes, vscode.ConfigurationTarget.Global);
+
+            const blockchainNetworkExplorerProvider = myExtension.getBlockchainNetworkExplorerProvider();
+            const allChildren: Array<BlockchainTreeItem> = await blockchainNetworkExplorerProvider.getChildren();
+
+            const myConnectionItem: ConnectionTreeItem = allChildren[0] as ConnectionTreeItem;
+
+            const loadFromConfigStub = mySandBox.stub(fabricClient, 'loadFromConfig').returns(fabricClientMock);
+
+            const connectStub = mySandBox.stub(myExtension.getBlockchainNetworkExplorerProvider(), 'connect');
+
+            const mockRuntime = sinon.createStubInstance(FabricRuntime);
+            mySandBox.stub(FabricRuntimeManager.instance(), 'get').withArgs('myRuntime').returns(mockRuntime);
+
+            await vscode.commands.executeCommand(myConnectionItem.command.command, ...myConnectionItem.command.arguments);
+
+            loadFromConfigStub.should.have.been.called;
+
+            connectStub.should.have.been.calledOnceWithExactly(sinon.match.instanceOf(FabricRuntimeConnection));
+        });
+
     });
 });
