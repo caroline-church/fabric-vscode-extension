@@ -20,6 +20,7 @@ import * as chai from 'chai';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { PackageTreeItem } from '../../src/explorer/model/PackageTreeItem';
+import { ExtensionUtil } from '../../src/util/ExtensionUtil';
 
 chai.use(sinonChai);
 const should = chai.should();
@@ -29,9 +30,11 @@ describe('BlockchainPackageExplorer', () => {
     let mySandBox;
     let rootPath: string;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         mySandBox = sinon.createSandbox();
         rootPath = path.dirname(__dirname);
+
+        await ExtensionUtil.activateExtension();
     });
 
     afterEach(() => {
@@ -39,8 +42,6 @@ describe('BlockchainPackageExplorer', () => {
     });
 
     it('should show smart contract packages in the BlockchainPackageExplorer view', async () => {
-        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
         const packagesDir: string = path.join(rootPath, '../../test/data/smartContractDir');
         await vscode.workspace.getConfiguration().update('fabric.package.directory', packagesDir, true);
 
@@ -55,8 +56,6 @@ describe('BlockchainPackageExplorer', () => {
 
     });
     it('should refresh the smart contract packages view when refresh is called', async () => {
-        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
         const blockchainPackageExplorerProvider = myExtension.getBlockchainPackageExplorerProvider();
         const onDidChangeTreeDataSpy = mySandBox.spy(blockchainPackageExplorerProvider['_onDidChangeTreeData'], 'fire');
 
@@ -65,8 +64,6 @@ describe('BlockchainPackageExplorer', () => {
     });
 
     it('should show an error if it can\'t open the smart contract directory', async () => {
-        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
         const packagesDir: string = path.join(rootPath, '../../test/data/cake');
         await vscode.workspace.getConfiguration().update('fabric.package.directory', packagesDir, true);
 
@@ -77,8 +74,6 @@ describe('BlockchainPackageExplorer', () => {
     });
 
     it('should get a tree item in BlockchainPackageExplorer', async () => {
-        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
         const packagesDir: string = path.join(rootPath, '../../test/data/smartContractDir');
         await vscode.workspace.getConfiguration().update('fabric.package.directory', packagesDir, true);
 
@@ -90,5 +85,4 @@ describe('BlockchainPackageExplorer', () => {
         firstTestPackage.label.should.equal('smartContractPackageBlue');
         firstTestPackage.tooltip.should.equal('smartContractPackageBlue');
     });
-
 });

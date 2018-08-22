@@ -17,6 +17,7 @@ import { FabricRegistry } from '../../src/fabric/FabricRegistry';
 import { FabricRegistryEntry } from '../../src/fabric/FabricRegistryEntry';
 
 import * as chai from 'chai';
+import { ExtensionUtil } from '../../src/util/ExtensionUtil';
 
 chai.should();
 
@@ -42,7 +43,7 @@ describe('FabricRegistry', () => {
     let registry: TestFabricRegistry;
 
     beforeEach(async () => {
-        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
+        await ExtensionUtil.activateExtension();
         registry = new TestFabricRegistry();
         await vscode.workspace.getConfiguration().update(testFabricRegistryName, [], vscode.ConfigurationTarget.Global);
     });

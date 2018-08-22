@@ -13,12 +13,9 @@
 */
 import * as vscode from 'vscode';
 import { PackageTreeItem } from './model/PackageTreeItem';
-import * as fs from 'fs';
-import * as util from 'util';
+import * as fs from 'fs-extra';
 import * as path from 'path';
 import { BlockchainExplorerProvider } from './BlockchainExplorerProvider';
-const readDir = util.promisify(fs.readdir);
-const readFile = util.promisify(fs.readFile);
 
 export class BlockchainPackageExplorerProvider implements BlockchainExplorerProvider {
     public tree: Array<PackageTreeItem> = [];
@@ -39,7 +36,7 @@ export class BlockchainPackageExplorerProvider implements BlockchainExplorerProv
         console.log('BlockchainPackageExplorer: getChildren');
 
         try {
-            this.packageArray = await readDir(this.packageDir);
+            this.packageArray = await fs.readdir(this.packageDir);
         } catch (error) {
             console.log('Error reading smart contract folder:', error.message);
             vscode.window.showErrorMessage('Issue reading smart contract package folder:' + this.packageDir);
@@ -65,7 +62,7 @@ export class BlockchainPackageExplorerProvider implements BlockchainExplorerProv
             }
             const packageVersionFile: string = path.join(this.packageDir, packageFile, '/package.json');
             try {
-                const packageVersionFileContents: Buffer = await readFile(packageVersionFile);
+                const packageVersionFileContents: Buffer = await fs.readFile(packageVersionFile);
 
                 const packageVersionObj: any = JSON.parse(packageVersionFileContents.toString('utf8'));
                 const packageVersion: string = packageVersionObj.version;
@@ -87,5 +84,4 @@ export class BlockchainPackageExplorerProvider implements BlockchainExplorerProv
         console.log('getPackageDir');
         return vscode.workspace.getConfiguration().get('fabric.package.directory');
     }
-
 }

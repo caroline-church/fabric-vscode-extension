@@ -18,10 +18,12 @@ import * as chai from 'chai';
 import * as sinon from 'sinon';
 import * as tmp from 'tmp';
 import * as sinonChai from 'sinon-chai';
-import { Util } from '../../src/commands/util';
+
 chai.use(sinonChai);
 import * as fs from 'fs';
 import * as util from 'util';
+import { CommandUtil } from '../../src/util/CommandUtil';
+import { ExtensionUtil } from '../../src/util/ExtensionUtil';
 const mkdir = util.promisify(fs.mkdir);
 const exists = util.promisify(fs.exists);
 
@@ -39,9 +41,9 @@ describe('CreateFabricProjectCommand', () => {
     let uriArr: Array<vscode.Uri>;
 
     beforeEach(async () => {
-        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
+        await ExtensionUtil.activateExtension();
         mySandBox = sinon.createSandbox();
-        sendCommandStub = mySandBox.stub(Util, 'sendCommand');
+        sendCommandStub = mySandBox.stub(CommandUtil, 'sendCommand');
         errorSpy = mySandBox.spy(vscode.window, 'showErrorMessage');
         quickPickStub = mySandBox.stub(vscode.window, 'showQuickPick');
         openDialogStub = mySandBox.stub(vscode.window, 'showOpenDialog');
@@ -74,7 +76,7 @@ describe('CreateFabricProjectCommand', () => {
         }
         openDialogStub.resolves(uriArr);
 
-        await vscode.commands.executeCommand('createFabricProjectEntry');
+        await vscode.commands.executeCommand('blockchain.createFabricProjectEntry');
         // check package.json has been created
         const pathToCheck = path.join(uri.fsPath, 'package.json');
         chai.assert(exists(pathToCheck), 'No package.json found, looking here:' + pathToCheck);
@@ -86,7 +88,7 @@ describe('CreateFabricProjectCommand', () => {
     it('should show error if npm is not installed', async () => {
         // npm not installed
         sendCommandStub.onCall(0).rejects();
-        await vscode.commands.executeCommand('createFabricProjectEntry');
+        await vscode.commands.executeCommand('blockchain.createFabricProjectEntry');
         errorSpy.should.have.been.calledWith('npm is required before creating a fabric project');
     });
 
@@ -94,7 +96,7 @@ describe('CreateFabricProjectCommand', () => {
         // yo not installed and not wanted
         sendCommandStub.onCall(0).rejects({message : 'npm ERR'});
         quickPickStub.resolves('no');
-        await vscode.commands.executeCommand('createFabricProjectEntry');
+        await vscode.commands.executeCommand('blockchain.createFabricProjectEntry');
         errorSpy.should.have.been.calledWith('npm modules: yo and generator-fabric are required before creating a fabric project');
     });
 
@@ -105,7 +107,7 @@ describe('CreateFabricProjectCommand', () => {
         quickPickStub.resolves('yes');
         openDialogStub.resolves(uriArr);
         sendCommandStub.onCall(2).rejects();
-        await vscode.commands.executeCommand('createFabricProjectEntry');
+        await vscode.commands.executeCommand('blockchain.createFabricProjectEntry');
         errorSpy.should.have.been.calledWith('Issue installing generator-fabric module');
     });
 
@@ -115,7 +117,7 @@ describe('CreateFabricProjectCommand', () => {
         quickPickStub.resolves('yes');
         openDialogStub.resolves(uriArr);
         sendCommandStub.onCall(1).rejects();
-        await vscode.commands.executeCommand('createFabricProjectEntry');
+        await vscode.commands.executeCommand('blockchain.createFabricProjectEntry');
         errorSpy.should.have.been.calledWith('Issue installing yo node module');
     });
 
@@ -129,7 +131,7 @@ describe('CreateFabricProjectCommand', () => {
         sendCommandStub.onCall(2).resolves();
         // issue installing yo fabric should show an error
         sendCommandStub.onCall(3).rejects();
-        await vscode.commands.executeCommand('createFabricProjectEntry');
+        await vscode.commands.executeCommand('blockchain.createFabricProjectEntry');
         errorSpy.should.have.been.calledWith('Issue creating fabric project');
     });
 
@@ -137,7 +139,7 @@ describe('CreateFabricProjectCommand', () => {
         // We actually want to execute the command!
         sendCommandStub.restore();
         openDialogStub.resolves(undefined);
-        await vscode.commands.executeCommand('createFabricProjectEntry');
+        await vscode.commands.executeCommand('blockchain.createFabricProjectEntry');
         openDialogStub.should.have.been.calledOnce;
         executeCommandStub.should.have.been.calledOnce;
         executeCommandStub.should.have.not.been.calledWith('vscode.openFolder');

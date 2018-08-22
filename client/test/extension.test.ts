@@ -18,6 +18,7 @@ import * as path from 'path';
 import * as chai from 'chai';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
+import { ExtensionUtil } from '../src/util/ExtensionUtil';
 
 chai.should();
 chai.use(sinonChai);
@@ -27,20 +28,17 @@ describe('Extension Tests', () => {
 
     let mySandBox;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         mySandBox = sinon.createSandbox();
+
+        await ExtensionUtil.activateExtension();
     });
 
     afterEach(() => {
         mySandBox.restore();
     });
 
-    // Defines a Mocha unit test
     it('should check all the commands are registered', async () => {
-
-        // execute a command to force the extension activation
-        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
         const allCommands = await vscode.commands.getCommands();
 
         const blockchainCommands = allCommands.filter((command) => {
@@ -54,19 +52,13 @@ describe('Extension Tests', () => {
             'blockchainExplorer.addConnectionEntry',
             'blockchainExplorer.deleteConnectionEntry',
             'blockchainExplorer.addConnectionIdentityEntry',
-            'blockchainAPackageExplorer.refreshEntry']);
-
-        // Don't need this if createFabricProject is renamed
-        const createFabricCommand = allCommands.filter((command) => {
-            return command.startsWith('createFabric');
-        });
-        createFabricCommand.should.deep.equal(['createFabricProjectEntry']);
+            'blockchain.createFabricProjectEntry',
+            'blockchainAPackageExplorer.refreshEntry'
+        ]);
     });
 
     it('should refresh the tree when a connection is added', async () => {
         await vscode.workspace.getConfiguration().update('fabric.connections', [], vscode.ConfigurationTarget.Global);
-
-        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
 
         const treeDataProvider = myExtension.getBlockchainNetworkExplorerProvider();
 
@@ -90,8 +82,6 @@ describe('Extension Tests', () => {
 
     it('should refresh the tree when a runtime is added', async () => {
         await vscode.workspace.getConfiguration().update('fabric.runtimes', [], vscode.ConfigurationTarget.Global);
-
-        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
 
         const treeDataProvider = myExtension.getBlockchainNetworkExplorerProvider();
 

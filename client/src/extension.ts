@@ -22,11 +22,15 @@ import { addConnectionIdentity } from './commands/addConnectionIdentityCommand';
 import { connect } from './commands/connectCommand';
 import { createFabricProject } from './commands/createFabricProjectCommand';
 
+import { VSCodeOutputAdapter } from './logging/VSCodeOutputAdapter';
+
 let blockchainNetworkExplorerProvider;
 let blockchainPackageExplorerProvider;
 
-export function activate(context: vscode.ExtensionContext): void {
-    console.log('CLIENT activate!!!');
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
+
+    const outputAdapter: VSCodeOutputAdapter = VSCodeOutputAdapter.instance();
+    outputAdapter.log('extension activated');
 
     blockchainNetworkExplorerProvider = new BlockchainNetworkExplorerProvider();
     blockchainPackageExplorerProvider = new BlockchainPackageExplorerProvider();
@@ -39,7 +43,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('blockchainExplorer.addConnectionEntry', addConnection);
     vscode.commands.registerCommand('blockchainExplorer.deleteConnectionEntry', (connection) => deleteConnection(connection));
     vscode.commands.registerCommand('blockchainExplorer.addConnectionIdentityEntry', (connection) => addConnectionIdentity(connection));
-    vscode.commands.registerCommand('createFabricProjectEntry', createFabricProject);
+    vscode.commands.registerCommand('blockchain.createFabricProjectEntry', createFabricProject);
     vscode.commands.registerCommand('blockchainAPackageExplorer.refreshEntry', () => blockchainPackageExplorerProvider.refresh());
 
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration((e) => {
@@ -56,6 +60,7 @@ export function activate(context: vscode.ExtensionContext): void {
 export function getBlockchainNetworkExplorerProvider(): BlockchainNetworkExplorerProvider {
     return blockchainNetworkExplorerProvider;
 }
+
 export function getBlockchainPackageExplorerProvider(): BlockchainPackageExplorerProvider {
     return blockchainPackageExplorerProvider;
 }

@@ -20,6 +20,7 @@ import * as chai from 'chai';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { BlockchainTreeItem } from '../../src/explorer/model/BlockchainTreeItem';
+import { ExtensionUtil } from '../../src/util/ExtensionUtil';
 
 chai.should();
 chai.use(sinonChai);
@@ -29,8 +30,9 @@ describe('AddConnectionIdentityCommand', () => {
     describe('addConnectionIdentity', () => {
         let mySandBox;
 
-        beforeEach(() => {
+        beforeEach(async () => {
             mySandBox = sinon.createSandbox();
+            await ExtensionUtil.activateExtension();
         });
 
         afterEach(() => {
@@ -38,12 +40,8 @@ describe('AddConnectionIdentityCommand', () => {
         });
 
         it('should test a connection identity can be added via the command', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', [], vscode.ConfigurationTarget.Global);
-
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
 
             let connections: Array<any> = [];
 
@@ -95,12 +93,8 @@ describe('AddConnectionIdentityCommand', () => {
         });
 
         it('should test a config can be cancelled before choosing a connection', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', [], vscode.ConfigurationTarget.Global);
-
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
 
             let connections: Array<any> = [];
 
@@ -144,12 +138,8 @@ describe('AddConnectionIdentityCommand', () => {
         });
 
         it('should test a config can be cancelled on certificate path', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', [], vscode.ConfigurationTarget.Global);
-
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
 
             let connections: Array<any> = [];
 
@@ -196,12 +186,8 @@ describe('AddConnectionIdentityCommand', () => {
         });
 
         it('should test a config can be cancelled when adding private key', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', [], vscode.ConfigurationTarget.Global);
-
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
 
             let connections: Array<any> = [];
 
@@ -249,12 +235,8 @@ describe('AddConnectionIdentityCommand', () => {
         });
 
         it('should be able to add a identity from the tree', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', [], vscode.ConfigurationTarget.Global);
-
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
 
             let connections: Array<any> = [];
 
@@ -311,12 +293,8 @@ describe('AddConnectionIdentityCommand', () => {
         });
 
         it('should show an error if can\'t add the identity', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', [], vscode.ConfigurationTarget.Global);
-
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
 
             let connections: Array<any> = [];
 

@@ -16,7 +16,7 @@ import * as path from 'path';
 
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ParsedCertificate } from '../src/parsedCertificate';
+import { ParsedCertificate } from '../../src/fabric/ParsedCertificate';
 
 chai.should();
 chai.use(sinonChai);
@@ -28,7 +28,7 @@ describe('ParsedCertificate', () => {
         it('should create a parsed certificate', async () => {
             const rootPath = path.dirname(__dirname);
 
-            const certPath = path.join(rootPath, '../test/data/connectionTwo/credentials/certificate');
+            const certPath = path.join(rootPath, '../../test/data/connectionTwo/credentials/certificate');
             const parsedCertificate = new ParsedCertificate(certPath);
 
             parsedCertificate.should.be.instanceof(ParsedCertificate);
@@ -39,7 +39,7 @@ describe('ParsedCertificate', () => {
         it('should get the common name from the cert', async () => {
             const rootPath = path.dirname(__dirname);
 
-            const certPath = path.join(rootPath, '../test/data/connectionTwo/credentials/certificate');
+            const certPath = path.join(rootPath, '../../test/data/connectionTwo/credentials/certificate');
             const parsedCertificate = new ParsedCertificate(certPath);
 
             parsedCertificate.getCommonName().should.equal('Admin@org1.example.com');

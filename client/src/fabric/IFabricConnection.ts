@@ -11,11 +11,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
+'use strict';
 
-export interface FabricOutputAdapter {
+export interface IFabricConnection {
 
-    log(value: string): void;
+    connect(): Promise<void>;
 
-    error(value: string): void;
+    getAllPeerNames(): Array<string>;
 
+    getAllChannelsForPeer(peerName: string): Promise<Array<string>> ;
+
+    getInstalledChaincode(peerName: string): Promise<Map<string, Array<string>>>;
+
+    getInstantiatedChaincode(channelName: string): Promise<Array<any>>;
 }

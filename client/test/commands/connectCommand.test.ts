@@ -28,6 +28,7 @@ import { ConnectionIdentityTreeItem } from '../../src/explorer/model/ConnectionI
 import { FabricRuntimeConnection } from '../../src/fabric/FabricRuntimeConnection';
 import { FabricRuntime } from '../../src/fabric/FabricRuntime';
 import { FabricRuntimeManager } from '../../src/fabric/FabricRuntimeManager';
+import { ExtensionUtil } from '../../src/util/ExtensionUtil';
 
 chai.should();
 chai.use(sinonChai);
@@ -42,9 +43,11 @@ describe('ConnectCommand', () => {
         let mySandBox: sinon.SinonSandbox;
         let fabricClientMock: sinon.SinonStubbedInstance<fabricClient>;
 
-        beforeEach(() => {
+        beforeEach(async () => {
             fabricClientMock = sinon.createStubInstance(fabricClient);
             mySandBox = sinon.createSandbox();
+
+            await ExtensionUtil.activateExtension();
         });
 
         afterEach(async () => {
@@ -54,8 +57,6 @@ describe('ConnectCommand', () => {
         });
 
         it('should test the a fabric can be connected to from the command', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             const rootPath = path.dirname(__dirname);
 
             const connections = [{
@@ -84,8 +85,6 @@ describe('ConnectCommand', () => {
         });
 
         it('should test the a fabric can be connected to from the command with multiple identities', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             const rootPath = path.dirname(__dirname);
 
             const connections = [{
@@ -120,8 +119,6 @@ describe('ConnectCommand', () => {
         });
 
         it('should test that can cancel on choosing connection', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             const rootPath = path.dirname(__dirname);
 
             const connections = [{
@@ -148,8 +145,6 @@ describe('ConnectCommand', () => {
         });
 
         it('should test that can be cancelled on choose identity', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             const rootPath = path.dirname(__dirname);
 
             const connections = [{
@@ -176,8 +171,6 @@ describe('ConnectCommand', () => {
         });
 
         it('should test the a fabric with a single identity can be connected to from the tree', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             const rootPath = path.dirname(__dirname);
 
             const connections = [{
@@ -209,8 +202,6 @@ describe('ConnectCommand', () => {
         });
 
         it('should test the a fabric with multiple identities can be connected to from the tree', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             const rootPath = path.dirname(__dirname);
 
             const connections = [{
@@ -247,8 +238,6 @@ describe('ConnectCommand', () => {
         });
 
         it('should handle connection not found', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             const rootPath = path.dirname(__dirname);
 
             const connections = [{
@@ -273,8 +262,6 @@ describe('ConnectCommand', () => {
         });
 
         it('should handle identity not found', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             const rootPath = path.dirname(__dirname);
 
             const connections = [{
@@ -305,8 +292,6 @@ describe('ConnectCommand', () => {
         });
 
         it('should handle error from conecting', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             const rootPath = path.dirname(__dirname);
 
             const connections = [{
@@ -340,8 +325,6 @@ describe('ConnectCommand', () => {
         });
 
         it('should connect to a managed runtime using a quick pick', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             const connections = [{
                 name: 'myRuntime',
                 managedRuntime: true
@@ -373,8 +356,6 @@ describe('ConnectCommand', () => {
         });
 
         it('should connect to a managed runtime from the tree', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             const connections = [{
                 name: 'myRuntime',
                 managedRuntime: true
@@ -407,6 +388,5 @@ describe('ConnectCommand', () => {
 
             connectStub.should.have.been.calledOnceWithExactly(sinon.match.instanceOf(FabricRuntimeConnection));
         });
-
     });
 });

@@ -17,6 +17,7 @@ import { FabricConnectionRegistry } from '../../src/fabric/FabricConnectionRegis
 
 import * as chai from 'chai';
 import { FabricConnectionRegistryEntry } from '../../src/fabric/FabricConnectionRegistryEntry';
+import { ExtensionUtil } from '../../src/util/ExtensionUtil';
 
 chai.should();
 
@@ -25,7 +26,7 @@ describe('FabricConnectionRegistry', () => {
     const registry: FabricConnectionRegistry = FabricConnectionRegistry.instance();
 
     beforeEach(async () => {
-        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
+        await ExtensionUtil.activateExtension();
         await registry.clear();
     });
 

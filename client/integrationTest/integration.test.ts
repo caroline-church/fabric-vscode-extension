@@ -21,6 +21,7 @@ import * as sinonChai from 'sinon-chai';
 import { ChannelTreeItem } from '../src/explorer/model/ChannelTreeItem';
 import { PeerTreeItem } from '../src/explorer/model/PeerTreeItem';
 import { PeersTreeItem } from '../src/explorer/model/PeersTreeItem';
+import { ExtensionUtil } from '../src/util/ExtensionUtil';
 
 chai.should();
 chai.use(sinonChai);
@@ -33,10 +34,12 @@ describe('Integration Test', () => {
     let keyPath: string;
     let certPath: string;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         mySandBox = sinon.createSandbox();
         keyPath = path.join(__dirname, `../../integrationTest/hlfv1/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/key.pem`);
         certPath = path.join(__dirname, `../../integrationTest/hlfv1/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem`);
+   
+        await ExtensionUtil.activateExtension();
     });
 
     afterEach(() => {
@@ -44,8 +47,6 @@ describe('Integration Test', () => {
     });
 
     it('should connect to a real fabric', async () => {
-        await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
         // reset the available connections
         await vscode.workspace.getConfiguration().update('fabric.connections', [], vscode.ConfigurationTarget.Global);
 

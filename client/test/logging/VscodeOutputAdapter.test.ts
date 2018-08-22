@@ -12,17 +12,16 @@
  * limitations under the License.
 */
 
-import * as vscode from 'vscode';
-import { FabricConsoleOutputAdapter } from '../../src/fabric/FabricConsoleOutputAdapter';
+import { VSCodeOutputAdapter } from '../../src/logging/VSCodeOutputAdapter';
 
 import * as chai from 'chai';
 import * as sinon from 'sinon';
 
 chai.should();
 
-describe('FabricConsoleOutputAdapter', () => {
+describe('VSCodeOutputAdapter', () => {
 
-    const outputAdapter: FabricConsoleOutputAdapter = FabricConsoleOutputAdapter.instance();
+    const outputAdapter: VSCodeOutputAdapter = VSCodeOutputAdapter.instance();
     let sandbox: sinon.SinonSandbox;
 
     beforeEach(async () => {
@@ -36,21 +35,17 @@ describe('FabricConsoleOutputAdapter', () => {
     describe('#log', () => {
 
         it('should log to the console', () => {
-            const consoleLogStub = sandbox.stub(console, 'log');
+            const outputSpy = sandbox.spy(outputAdapter['outputChannel'], 'appendLine');
             outputAdapter.log('hello world');
-            consoleLogStub.should.have.been.calledOnceWithExactly('hello world');
+            outputSpy.should.have.been.calledOnceWithExactly('hello world');
         });
-
     });
 
     describe('#error', () => {
-
         it('should log to the console', () => {
-            const consoleErrorStub = sandbox.stub(console, 'error');
+            const outputSpy = sandbox.spy(outputAdapter['outputChannel'], 'appendLine');
             outputAdapter.error('hello world');
-            consoleErrorStub.should.have.been.calledOnceWithExactly('hello world');
+            outputSpy.should.have.been.calledOnceWithExactly('hello world');
         });
-
     });
-
 });

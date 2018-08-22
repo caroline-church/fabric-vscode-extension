@@ -21,6 +21,7 @@ import * as sinonChai from 'sinon-chai';
 
 import * as myExtension from '../../src/extension';
 import { BlockchainTreeItem } from '../../src/explorer/model/BlockchainTreeItem';
+import { ExtensionUtil } from '../../src/util/ExtensionUtil';
 
 chai.should();
 chai.use(sinonChai);
@@ -31,8 +32,10 @@ describe('DeleteConnectionCommand', () => {
 
         let mySandBox;
 
-        beforeEach(() => {
+        beforeEach(async () => {
             mySandBox = sinon.createSandbox();
+
+            await ExtensionUtil.activateExtension();
         });
 
         afterEach(() => {
@@ -40,8 +43,6 @@ describe('DeleteConnectionCommand', () => {
         });
 
         it('should test a connection can be deleted from the command', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', [], vscode.ConfigurationTarget.Global);
 
@@ -82,8 +83,6 @@ describe('DeleteConnectionCommand', () => {
         });
 
         it('should test a connection can be deleted from tree', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', [], vscode.ConfigurationTarget.Global);
 
@@ -127,8 +126,6 @@ describe('DeleteConnectionCommand', () => {
         });
 
         it('should test delete connection can be cancelled', async () => {
-            await vscode.extensions.getExtension('hyperledger.hyperledger-fabric').activate();
-
             // reset the available connections
             await vscode.workspace.getConfiguration().update('fabric.connections', [], vscode.ConfigurationTarget.Global);
 

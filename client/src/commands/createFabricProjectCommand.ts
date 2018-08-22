@@ -12,8 +12,9 @@
  * limitations under the License.
 */
 'use strict';
-import { window, Uri, commands, OutputChannel } from 'vscode';
-import {Util} from './util';
+import { window, Uri, commands } from 'vscode';
+import { VSCodeOutputAdapter } from '../logging/VSCodeOutputAdapter';
+import { CommandUtil } from '../util/CommandUtil';
 
 export async function createFabricProject(): Promise<void> {
     console.log('create Fabric Project');
@@ -22,10 +23,10 @@ export async function createFabricProject(): Promise<void> {
     let needGenFab: boolean = false;
 
     try {
-        await Util.sendCommand('npm view yo version');
+        await CommandUtil.sendCommand('npm view yo version');
         console.log('yo is installed');
         try {
-            await Util.sendCommand('npm view generator-fabric version');
+            await CommandUtil.sendCommand('npm view generator-fabric version');
             console.log('generator-fabric installed');
         } catch (error) {
             needGenFab = true;
@@ -56,29 +57,28 @@ export async function createFabricProject(): Promise<void> {
     }
 
     // Create and show output channel
-    const outputChannel: OutputChannel = window.createOutputChannel('Hyperledger Fabric');
-    outputChannel.show();
+    const outputAdapter: VSCodeOutputAdapter = VSCodeOutputAdapter.instance();
 
     // Install missing node modules
     if (needYo) {
-        outputChannel.appendLine('Installing yo');
+        outputAdapter.log('Installing yo');
         try {
-            const yoInstOut: string = await Util.sendCommand('npm install -g yo');
-            outputChannel.appendLine(yoInstOut);
+            const yoInstOut: string = await CommandUtil.sendCommand('npm install -g yo');
+            outputAdapter.log(yoInstOut);
         } catch (error) {
             window.showErrorMessage('Issue installing yo node module');
-            outputChannel.appendLine(error);
+            outputAdapter.log(error);
             return;
         }
     }
     if (needGenFab) {
-        outputChannel.appendLine('Installing generator-fabric');
+        outputAdapter.log('Installing generator-fabric');
         try {
-            const genFabInstOut: string = await Util.sendCommand('npm install -g generator-fabric');
-            outputChannel.appendLine(genFabInstOut);
+            const genFabInstOut: string = await CommandUtil.sendCommand('npm install -g generator-fabric');
+            outputAdapter.log(genFabInstOut);
         } catch (error) {
             window.showErrorMessage('Issue installing generator-fabric module');
-            outputChannel.appendLine(error);
+            outputAdapter.log(error);
             return;
         }
     }
@@ -99,13 +99,13 @@ export async function createFabricProject(): Promise<void> {
         // redirect to stdout as yo fabric prints to stderr
         const yoFabricCmd: string = `yo fabric:chaincode -- --language=javascript --name="new-smart-contract" --version=0.0.1 --description="My Smart Contract" --author="John Doe" --license=Apache-2.0 2>&1`;
         try {
-            const yoFabricOut = await Util.sendCommand(yoFabricCmd, folderSelect[0].fsPath);
-            outputChannel.appendLine(yoFabricOut);
-            outputChannel.appendLine('Successfully generated fabric project');
+            const yoFabricOut = await CommandUtil.sendCommand(yoFabricCmd, folderSelect[0].fsPath);
+            outputAdapter.log(yoFabricOut);
+            outputAdapter.log('Successfully generated fabric project');
         } catch (error) {
             console.log('found issue running yo:fabric command, see stderr:', error.stderr);
             window.showErrorMessage('Issue creating fabric project');
-            outputChannel.appendLine(error);
+            outputAdapter.log(error);
         }
 
     } // end of if folderSelect

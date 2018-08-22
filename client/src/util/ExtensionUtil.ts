@@ -12,27 +12,23 @@
  * limitations under the License.
 */
 'use strict';
-import * as fs from 'fs';
+import * as vscode from 'vscode';
 
-// tslint:disable no-var-requires
-const {Certificate} = require('@fidm/x509');
+export class ExtensionUtil {
 
-const ENCODING = 'utf8';
-
-export class ParsedCertificate {
-
-    private parsedCertificate: any;
-
-    constructor(certificatePath: string) {
-        const certFile: string = this.loadFileFromDisk(certificatePath);
-        this.parsedCertificate = Certificate.fromPEM(certFile);
+    public static getPackageJSON(): any {
+        return this.getExtension().packageJSON;
     }
 
-    public getCommonName(): string {
-        return this.parsedCertificate.subject.commonName;
+    public static activateExtension(): Thenable<void> {
+        return this.getExtension().activate();
     }
 
-    private loadFileFromDisk(path: string): string {
-        return fs.readFileSync(path, ENCODING) as string;
+    public static getExtensionPath(): string {
+        return this.getExtension().extensionPath;
+    }
+
+    private static getExtension(): vscode.Extension<any> {
+        return vscode.extensions.getExtension('IBM.ibm-blockchain');
     }
 }

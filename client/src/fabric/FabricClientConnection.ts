@@ -11,17 +11,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
-
 'use strict';
+import * as fs from 'fs-extra';
 
-import * as fs from 'fs';
+import { IFabricConnection } from './IFabricConnection';
 import { FabricConnection } from './FabricConnection';
-import { promisify } from 'util';
 
 const ENCODING = 'utf8';
-const readFile = promisify(fs.readFile);
 
-export class FabricClientConnection extends FabricConnection {
+export class FabricClientConnection extends FabricConnection implements IFabricConnection {
 
     private connectionProfilePath: string;
     private certificatePath: string;
@@ -36,7 +34,7 @@ export class FabricClientConnection extends FabricConnection {
 
     async connect(): Promise<void> {
         console.log('connect');
-        const connectionProfileContents = await readFile(this.connectionProfilePath, ENCODING);
+        const connectionProfileContents: string = await this.loadFileFromDisk(this.connectionProfilePath);
         const connectionProfile = JSON.parse(connectionProfileContents);
         const certificate: string = await this.loadFileFromDisk(this.certificatePath);
         const privateKey: string = await this.loadFileFromDisk(this.privateKeyPath);
@@ -45,7 +43,7 @@ export class FabricClientConnection extends FabricConnection {
 
     private async loadFileFromDisk(path: string): Promise<string> {
         console.log('loadFileFromDisk', path);
-        return readFile(path, ENCODING);
+        return fs.readFile(path, ENCODING);
     }
 
 }
