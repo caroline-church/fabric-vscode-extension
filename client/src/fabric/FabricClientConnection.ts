@@ -15,7 +15,7 @@
 import * as fs from 'fs-extra';
 
 import { IFabricConnection } from './IFabricConnection';
-import { FabricConnection} from './FabricConnection';
+import { FabricConnection } from './FabricConnection';
 
 const ENCODING = 'utf8';
 
@@ -34,7 +34,7 @@ export class FabricClientConnection extends FabricConnection implements IFabricC
 
     async connect(): Promise<void> {
         console.log('connect');
-        const connectionProfileContents = await this.loadFileFromDisk(this.connectionProfilePath);
+        const connectionProfileContents: string = await this.loadFileFromDisk(this.connectionProfilePath);
         const connectionProfile = JSON.parse(connectionProfileContents);
         const certificate: string = await this.loadFileFromDisk(this.certificatePath);
         const privateKey: string = await this.loadFileFromDisk(this.privateKeyPath);
