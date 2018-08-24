@@ -26,7 +26,7 @@ export class CommandUtil {
 
     // Send shell command
     public static async sendCommand(command: string, cwd ?: string): Promise<string> {
-        const result = await exec(command, {cwd: cwd});
+        const result: childProcessPromise.childProcessPromise = await exec(command, {cwd: cwd});
         return result.stdout.trim();
     }
 

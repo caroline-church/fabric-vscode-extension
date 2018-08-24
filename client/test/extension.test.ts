@@ -52,7 +52,7 @@ describe('Extension Tests', () => {
             'blockchainExplorer.addConnectionEntry',
             'blockchainExplorer.deleteConnectionEntry',
             'blockchainExplorer.addConnectionIdentityEntry',
-            'blockchain.createFabricProjectEntry',
+            'blockchain.createSmartContractProjectEntry',
             'blockchainAPackageExplorer.refreshEntry'
         ]);
     });

@@ -15,9 +15,10 @@
 import { window, Uri, commands } from 'vscode';
 import { VSCodeOutputAdapter } from '../logging/VSCodeOutputAdapter';
 import { CommandUtil } from '../util/CommandUtil';
+import * as child_process from 'child_process';
 
-export async function createFabricProject(): Promise<void> {
-    console.log('create Fabric Project');
+export async function createSmartContractProject(): Promise<void> {
+    console.log('create Smart Contract Project');
     // check for yo and generator-fabric
     let needYo: boolean = false;
     let needGenFab: boolean = false;
@@ -39,7 +40,7 @@ export async function createFabricProject(): Promise<void> {
             needGenFab = true; // assume generator-fabric isn't installed either
         } else {
             console.log('npm not installed');
-            window.showErrorMessage('npm is required before creating a fabric project');
+            window.showErrorMessage('npm is required before creating a smart contract project');
             return;
         }
     }
@@ -51,7 +52,7 @@ export async function createFabricProject(): Promise<void> {
         };
         const installPermission: string = await window.showQuickPick(['yes', 'no'], quickPickOptions);
         if (installPermission !== 'yes') {
-            window.showErrorMessage('npm modules: yo and generator-fabric are required before creating a fabric project');
+            window.showErrorMessage('npm modules: yo and generator-fabric are required before creating a smart contract project');
             return;
         }
     }
@@ -83,6 +84,29 @@ export async function createFabricProject(): Promise<void> {
         }
     }
 
+    let chaincodeLanguageOptions: string[];
+    let chaincodeLanguage: string;
+    outputAdapter.log('Getting chaincode languages...');
+    try {
+        chaincodeLanguageOptions = await getChaincodeLanguageOptions();
+    } catch (error) {
+        console.log('Issue determining available chaincode languages:', error);
+        window.showErrorMessage('Issue determining available chaincode language options');
+        return;
+    }
+    const choseChaincodeLanguageQuickPickOptions = {
+        placeHolder: 'Chose chaincode language (Esc to cancel)',
+        ignoreFocusOut: true,
+        matchOnDetail: true
+    };
+    chaincodeLanguage = await window.showQuickPick(chaincodeLanguageOptions, choseChaincodeLanguageQuickPickOptions);
+    if (!chaincodeLanguageOptions.includes(chaincodeLanguage)) {
+        // User has cancelled the QuickPick box
+        return;
+    }
+    chaincodeLanguage = chaincodeLanguage.toLowerCase();
+    console.log('chosen chaincode language is:' + chaincodeLanguage);
+
     // Prompt the user for a file system folder
     const openDialogOptions = {
         canSelectFolders: true,
@@ -92,22 +116,50 @@ export async function createFabricProject(): Promise<void> {
     if (folderSelect) {  // undefined if the user cancels the open dialog box
 
         // Open the returned folder in explorer, in a new window
-        console.log('new fabric project folder is :' + folderSelect[0].fsPath);
+        console.log('new smart contract project folder is :' + folderSelect[0].fsPath);
         await commands.executeCommand('vscode.openFolder', folderSelect[0], true);
 
         // Run yo:fabric with default options in folderSelect
         // redirect to stdout as yo fabric prints to stderr
-        const yoFabricCmd: string = `yo fabric:chaincode -- --language=javascript --name="new-smart-contract" --version=0.0.1 --description="My Smart Contract" --author="John Doe" --license=Apache-2.0 2>&1`;
+        const yoFabricCmd: string = `yo fabric:chaincode -- --language="${chaincodeLanguage}" --name="new-smart-contract" --version=0.0.1 --description="My Smart Contract" --author="John Doe" --license=Apache-2.0 2>&1`;
         try {
             const yoFabricOut = await CommandUtil.sendCommand(yoFabricCmd, folderSelect[0].fsPath);
             outputAdapter.log(yoFabricOut);
-            outputAdapter.log('Successfully generated fabric project');
+            outputAdapter.log('Successfully generated smart contract project');
         } catch (error) {
-            console.log('found issue running yo:fabric command, see stderr:', error.stderr);
-            window.showErrorMessage('Issue creating fabric project');
+            console.log('found issue running yo:fabric command:', error);
+            window.showErrorMessage('Issue creating smart contract project');
             outputAdapter.log(error);
         }
 
     } // end of if folderSelect
 
-} // end of createFabricProject function
+} // end of createSmartContractProject function
+
+export async function getChaincodeLanguageOptions(): Promise<string[]> {
+    const yoFabricChild: child_process.ChildProcess = await child_process.spawn('/bin/sh', ['-c', 'yo fabric:chaincode < /dev/null']);
+    return new Promise<string[]>((resolve, reject) => {
+        yoFabricChild.on('exit', (returnCode: number) => {
+            const stdout: Buffer = yoFabricChild.stdout.read();
+            if (returnCode) {
+                return reject(new Error(`yo fabric: chaincode failed to run with return code ${returnCode}`));
+            } else if (stdout) {
+                const chaincodeLanguageArray: string[] = stdout.toString().split('\n');
+                chaincodeLanguageArray.shift();
+                const cleanChaincodeLangaugeArray: string[] = [];
+                for (const language of chaincodeLanguageArray) {
+                    if (language !== '') {
+                        // Grab the first word in the string and remove non-word characters
+                        const regex: RegExp = /^[^\w]*([\w]+)/g;
+                        const regexMatchArray: RegExpMatchArray = regex.exec(language);
+                        cleanChaincodeLangaugeArray.push(regexMatchArray[1]);
+                    }
+                }
+                console.log('printing available chaincode languages from yo fabric:chaincode output:', cleanChaincodeLangaugeArray);
+                return resolve(cleanChaincodeLangaugeArray);
+            } else {
+                return reject(new Error(`Failed to get output from yo fabric:chaincode`));
+            }
+        });
+    });
+}

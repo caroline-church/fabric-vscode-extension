@@ -43,7 +43,7 @@ describe('ExtensionUtil Tests', () => {
     });
 
     describe('activateExtension', () => {
-        it('should axtivate the extension', async () => {
+        it('should activate the extension', async () => {
             await ExtensionUtil.activateExtension();
 
             const isActive: boolean = vscode.extensions.getExtension('IBM.ibm-blockchain').isActive;

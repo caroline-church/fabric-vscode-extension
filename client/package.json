@@ -31,7 +31,7 @@
     "onCommand:blockchainExplorer.addConnectionIdentityEntry",
     "onCommand:blockchainExplorer.connectEntry",
     "onCommand:blockchainExplorer.disconnectEntry",
-    "onCommand:createFabricProjectEntry"
+    "onCommand:blockchain.createSmartContractProjectEntry"
   ],
   "main": "./out/src/extension",
   "contributes": {
@@ -121,8 +121,8 @@
         "category": "Blockchain"
       },
       {
-        "command": "blockchain.createFabricProjectEntry",
-        "title": "Create Fabric Project",
+        "command": "blockchain.createSmartContractProjectEntry",
+        "title": "Create Smart Contract Project",
         "category": "Blockchain"
       },
       {
