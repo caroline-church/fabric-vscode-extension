@@ -90,23 +90,22 @@ export async function createSmartContractProject(): Promise<void> {
     try {
         chaincodeLanguageOptions = await getChaincodeLanguageOptions();
     } catch (error) {
-        console.log('creating default javascript smart contract project');
-        window.showInformationMessage('Unable to determine chaincode language options, using javascript as default');
-        chaincodeLanguage = 'javascript';
+        console.log('Issue determining available chaincode languages:', error);
+        window.showErrorMessage('Issue determining available chaincode language options');
+        return;
     }
     const choseChaincodeLanguageQuickPickOptions = {
         placeHolder: 'Chose chaincode language (Esc to cancel)',
         ignoreFocusOut: true,
         matchOnDetail: true
     };
-    if (!chaincodeLanguage) {
-        chaincodeLanguage = await window.showQuickPick(chaincodeLanguageOptions, choseChaincodeLanguageQuickPickOptions);
-        if (!chaincodeLanguageOptions.includes(chaincodeLanguage)) {
-            return;
-        }
-        chaincodeLanguage = chaincodeLanguage.toLowerCase();
-        console.log('chosen chaincode language is:' + chaincodeLanguage);
+    chaincodeLanguage = await window.showQuickPick(chaincodeLanguageOptions, choseChaincodeLanguageQuickPickOptions);
+    if (!chaincodeLanguageOptions.includes(chaincodeLanguage)) {
+        // User has cancelled the QuickPick box
+        return;
     }
+    chaincodeLanguage = chaincodeLanguage.toLowerCase();
+    console.log('chosen chaincode language is:' + chaincodeLanguage);
 
     // Prompt the user for a file system folder
     const openDialogOptions = {
@@ -150,13 +149,14 @@ export async function getChaincodeLanguageOptions(): Promise<string[]> {
                 const cleanChaincodeLangaugeArray: string[] = [];
                 for (const language of chaincodeLanguageArray) {
                     if (language !== '') {
+                        // Grab the first word in the string and remove non-word characters
                         const regex: RegExp = /^[^\w]*([\w]+)/g;
                         const regexMatchArray: RegExpMatchArray = regex.exec(language);
                         cleanChaincodeLangaugeArray.push(regexMatchArray[1]);
                     }
                 }
                 console.log('printing available chaincode languages from yo fabric:chaincode output:', cleanChaincodeLangaugeArray);
-                resolve(cleanChaincodeLangaugeArray);
+                return resolve(cleanChaincodeLangaugeArray);
             } else {
                 return reject(new Error(`Failed to get output from yo fabric:chaincode`));
             }

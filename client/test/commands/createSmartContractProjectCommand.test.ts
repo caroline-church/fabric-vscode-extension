@@ -25,7 +25,6 @@ import * as util from 'util';
 import * as child_process from 'child_process';
 import { CommandUtil } from '../../src/util/CommandUtil';
 import { ExtensionUtil } from '../../src/util/ExtensionUtil';
-const mkdir = util.promisify(fs.mkdir);
 
 // Defines a Mocha test suite to group tests of similar kind together
 // tslint:disable no-unused-expression
@@ -34,7 +33,6 @@ describe('CreateSmartContractProjectCommand', () => {
     let mySandBox: sinon.SinonSandbox;
     let sendCommandStub: sinon.SinonStub;
     let errorSpy: sinon.SinonSpy;
-    let infoBoxSpy: sinon.SinonSpy;
     let quickPickStub: sinon.SinonStub;
     let openDialogStub: sinon.SinonStub;
     let executeCommandStub: sinon.SinonStub;
@@ -46,7 +44,6 @@ describe('CreateSmartContractProjectCommand', () => {
         mySandBox = sinon.createSandbox();
         sendCommandStub = mySandBox.stub(CommandUtil, 'sendCommand');
         errorSpy = mySandBox.spy(vscode.window, 'showErrorMessage');
-        infoBoxSpy = mySandBox.spy(vscode.window, 'showInformationMessage');
         quickPickStub = mySandBox.stub(vscode.window, 'showQuickPick');
         openDialogStub = mySandBox.stub(vscode.window, 'showOpenDialog');
         const originalExecuteCommand = vscode.commands.executeCommand;
@@ -58,6 +55,7 @@ describe('CreateSmartContractProjectCommand', () => {
                 return originalExecuteCommand.apply(this, arguments);
             }
         });
+        // Create a tmp directory for Smart Contract packages, and create a Uri of it
         uri = vscode.Uri.file(tmp.dirSync().name);
         uriArr = [uri];
     });
@@ -69,13 +67,7 @@ describe('CreateSmartContractProjectCommand', () => {
     it('should start a typescript smart contract project', async () => {
         // We actually want to execute the command!
         sendCommandStub.restore();
-        try {
-            await mkdir(uri.fsPath);
-        } catch (error) {
-            if (!error.message.includes('file already exists') ) {
-                throw new error('failed to create test directory:' + uri.fsPath);
-            }
-        }
+
         quickPickStub.resolves('TypeScript');
         openDialogStub.resolves(uriArr);
 
@@ -153,7 +145,7 @@ describe('CreateSmartContractProjectCommand', () => {
         spawnStub.withArgs('/bin/sh', ['-c', 'yo fabric:chaincode < /dev/null']).callsFake(() => {
             return originalSpawn('/bin/sh', [ '-c', 'echo blah && echo "  Go" && echo "  JavaScript" && echo "  TypeScript  [45R"']);
         });
-        quickPickStub.onCall(0).returns('TypeScript');
+        quickPickStub.onCall(0).returns('JavaScript');
 
         openDialogStub.resolves(undefined);
         await vscode.commands.executeCommand('blockchain.createSmartContractProjectEntry');
@@ -166,13 +158,7 @@ describe('CreateSmartContractProjectCommand', () => {
 
     it('should create a go chaincode project when the user selects go as the language', async () => {
         sendCommandStub.restore();
-        try {
-            await mkdir(uri.fsPath);
-        } catch (error) {
-            if (!error.message.includes('file already exists') ) {
-                throw new error('failed to create test directory:' + uri.fsPath);
-            }
-        }
+
         const originalSpawn = child_process.spawn;
         const spawnStub: sinon.SinonStub = mySandBox.stub(child_process, 'spawn');
         spawnStub.withArgs('/bin/sh', ['-c', 'yo fabric:chaincode < /dev/null']).callsFake(() => {
@@ -191,15 +177,9 @@ describe('CreateSmartContractProjectCommand', () => {
         errorSpy.should.not.have.been.called;
     }).timeout(20000);
 
-    it('should create a default javascript project if getting the available chaincode lanaguages fails', async () => {
+    it('should show an error if determining available chaincode languages fails', async () => {
         sendCommandStub.restore();
-        try {
-            await mkdir(uri.fsPath);
-        } catch (error) {
-            if (!error.message.includes('file already exists') ) {
-                throw new error('failed to create test directory:' + uri.fsPath);
-            }
-        }
+
         const originalSpawn = child_process.spawn;
         const spawnStub: sinon.SinonStub = mySandBox.stub(child_process, 'spawn');
         spawnStub.withArgs('/bin/sh', ['-c', 'yo fabric:chaincode < /dev/null']).callsFake(() => {
@@ -208,42 +188,25 @@ describe('CreateSmartContractProjectCommand', () => {
         openDialogStub.resolves(uriArr);
 
         await vscode.commands.executeCommand('blockchain.createSmartContractProjectEntry');
-        const pathToCheck = path.join(uri.fsPath, 'index.js');
-        const chaincodeExists = await fs_extra.pathExists(pathToCheck);
-        chaincodeExists.should.be.true;
         spawnStub.should.have.been.calledWith('/bin/sh', ['-c', 'yo fabric:chaincode < /dev/null']);
-        infoBoxSpy.should.have.been.calledWith('Unable to determine chaincode language options, using javascript as default');
-        executeCommandStub.should.have.been.calledTwice;
-        executeCommandStub.should.have.been.calledWith('vscode.openFolder', uriArr[0], true);
-        errorSpy.should.not.have.been.called;
+        executeCommandStub.should.have.been.calledOnce;
+        errorSpy.should.have.been.calledWith('Issue determining available chaincode language options');
     }).timeout(20000);
 
-    it('should create a default javascript project if getting the available chaincode lanaguages returns nothing', async () => {
-        // We actually want to execute the command!
+    it('should show an error if determining available chaincode languages returns nothing', async () => {
         sendCommandStub.restore();
-        try {
-            await mkdir(uri.fsPath);
-        } catch (error) {
-            if (!error.message.includes('file already exists') ) {
-                throw new error('failed to create test directory:' + uri.fsPath);
-            }
-        }
+
         const originalSpawn = child_process.spawn;
         const spawnStub: sinon.SinonStub = mySandBox.stub(child_process, 'spawn');
         spawnStub.withArgs('/bin/sh', ['-c', 'yo fabric:chaincode < /dev/null']).callsFake(() => {
-            return originalSpawn('/bin/sh', [ '-c', 'echo stderr >&2' ]);
+            return originalSpawn('/bin/sh', [ '-c', 'echo stderr >&2 && true' ]);
         });
         openDialogStub.resolves(uriArr);
 
         await vscode.commands.executeCommand('blockchain.createSmartContractProjectEntry');
-        const pathToCheck = path.join(uri.fsPath, 'index.js');
-        const chaincodeExists = await fs_extra.pathExists(pathToCheck);
-        chaincodeExists.should.be.true;
         spawnStub.should.have.been.calledWith('/bin/sh', ['-c', 'yo fabric:chaincode < /dev/null']);
-        infoBoxSpy.should.have.been.calledWith('Unable to determine chaincode language options, using javascript as default');
-        executeCommandStub.should.have.been.calledTwice;
-        executeCommandStub.should.have.been.calledWith('vscode.openFolder', uriArr[0], true);
-        errorSpy.should.not.have.been.called;
+        executeCommandStub.should.have.been.calledOnce;
+        errorSpy.should.have.been.calledWith('Issue determining available chaincode language options');
     }).timeout(20000);
 
     it('should not do anything if the user cancels chosing a chaincode language', async () => {
@@ -257,7 +220,6 @@ describe('CreateSmartContractProjectCommand', () => {
         await vscode.commands.executeCommand('blockchain.createSmartContractProjectEntry');
         spawnStub.should.have.been.calledWith('/bin/sh', ['-c', 'yo fabric:chaincode < /dev/null']);
         quickPickStub.should.have.been.calledOnce;
-        infoBoxSpy.should.not.have.been.called;
         errorSpy.should.not.have.been.called;
         openDialogStub.should.not.have.been.called;
     });
