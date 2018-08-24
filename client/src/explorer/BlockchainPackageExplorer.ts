@@ -16,10 +16,11 @@ import { PackageTreeItem } from './model/PackageTreeItem';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { BlockchainExplorerProvider } from './BlockchainExplorerProvider';
+import * as homeDir from 'home-dir';
 
 export class BlockchainPackageExplorerProvider implements BlockchainExplorerProvider {
     public tree: Array<PackageTreeItem> = [];
-    private packageArray: Array<any>;
+    private packageArray: Array<any> = [];
     private packageDir: string;
     private _onDidChangeTreeData: vscode.EventEmitter<any | undefined> = new vscode.EventEmitter<any | undefined>();
     // tslint:disable-next-line member-ordering
@@ -35,12 +36,27 @@ export class BlockchainPackageExplorerProvider implements BlockchainExplorerProv
         console.log('packageDir is:', this.packageDir);
         console.log('BlockchainPackageExplorer: getChildren');
 
+        if (this.packageDir.startsWith('~')) {
+            // Remove tilda and replace with home dir
+            this.packageDir = homeDir(this.packageDir.replace('~', ''));
+        }
+
         try {
             this.packageArray = await fs.readdir(this.packageDir);
         } catch (error) {
-            console.log('Error reading smart contract folder:', error.message);
-            vscode.window.showErrorMessage('Issue reading smart contract package folder:' + this.packageDir);
-            return;
+            if (error.message.includes('no such file or directory')) {
+                try {
+                    await fs.mkdirp(this.packageDir);
+                } catch (error) {
+                    console.log('Issue creating smart contract package folder:', error.message);
+                    vscode.window.showErrorMessage('Issue creating smart contract package folder:' + this.packageDir);
+                    return;
+                }
+            } else {
+                console.log('Error reading smart contract package folder:', error.message);
+                vscode.window.showErrorMessage('Issue reading smart contract package folder:' + this.packageDir);
+                return;
+            }
         }
         this.tree = await this.createPackageTree(this.packageArray as Array<PackageTreeItem>);
         return this.tree;
