@@ -38,7 +38,7 @@ describe('Integration Test', () => {
         mySandBox = sinon.createSandbox();
         keyPath = path.join(__dirname, `../../integrationTest/hlfv1/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/key.pem`);
         certPath = path.join(__dirname, `../../integrationTest/hlfv1/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem`);
-   
+
         await ExtensionUtil.activateExtension();
     });
 
@@ -79,5 +79,5 @@ describe('Integration Test', () => {
 
         peersChildren.length.should.equal(1);
         peersChildren[0].label.should.equal('peer0.org1.example.com');
-    });
+    }).timeout(4000);
 });

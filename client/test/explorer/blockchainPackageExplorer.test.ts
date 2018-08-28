@@ -21,6 +21,8 @@ import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { PackageTreeItem } from '../../src/explorer/model/PackageTreeItem';
 import { ExtensionUtil } from '../../src/util/ExtensionUtil';
+import * as fs_extra from 'fs-extra';
+import * as homeDir from 'home-dir';
 
 chai.use(sinonChai);
 const should = chai.should();
@@ -29,10 +31,14 @@ const should = chai.should();
 describe('BlockchainPackageExplorer', () => {
     let mySandBox;
     let rootPath: string;
+    let errorSpy;
+    let blockchainPackageExplorerProvider;
 
     beforeEach(async () => {
         mySandBox = sinon.createSandbox();
         rootPath = path.dirname(__dirname);
+        errorSpy = mySandBox.spy(vscode.window, 'showErrorMessage');
+        blockchainPackageExplorerProvider = myExtension.getBlockchainPackageExplorerProvider();
 
         await ExtensionUtil.activateExtension();
     });
@@ -45,7 +51,7 @@ describe('BlockchainPackageExplorer', () => {
         const packagesDir: string = path.join(rootPath, '../../test/data/smartContractDir');
         await vscode.workspace.getConfiguration().update('fabric.package.directory', packagesDir, true);
 
-        const blockchainPackageExplorerProvider = myExtension.getBlockchainPackageExplorerProvider();
+        blockchainPackageExplorerProvider = myExtension.getBlockchainPackageExplorerProvider();
         const testPackages: Array<PackageTreeItem> = await blockchainPackageExplorerProvider.getChildren();
 
         testPackages.length.should.equal(4);
@@ -53,36 +59,62 @@ describe('BlockchainPackageExplorer', () => {
         testPackages[1].label.should.equal('smartContractPackageGreen - v00.01.555');
         testPackages[2].label.should.equal('smartContractPackagePurple - v91.836.0');
         testPackages[3].label.should.equal('smartContractPackageYellow');
+        errorSpy.should.not.have.been.called;
 
     });
     it('should refresh the smart contract packages view when refresh is called', async () => {
-        const blockchainPackageExplorerProvider = myExtension.getBlockchainPackageExplorerProvider();
         const onDidChangeTreeDataSpy = mySandBox.spy(blockchainPackageExplorerProvider['_onDidChangeTreeData'], 'fire');
 
         await vscode.commands.executeCommand('blockchainAPackageExplorer.refreshEntry');
         onDidChangeTreeDataSpy.should.have.been.called;
+        errorSpy.should.not.have.been.called;
     });
 
-    it('should show an error if it can\'t open the smart contract directory', async () => {
+    it('should create the smart contract package directory if it doesn\'t exist', async () => {
         const packagesDir: string = path.join(rootPath, '../../test/data/cake');
         await vscode.workspace.getConfiguration().update('fabric.package.directory', packagesDir, true);
 
-        const errorSpy = mySandBox.spy(vscode.window, 'showErrorMessage');
-        const blockchainPackageExplorerProvider = myExtension.getBlockchainPackageExplorerProvider();
         await blockchainPackageExplorerProvider.getChildren();
-        errorSpy.should.have.been.called;
+        errorSpy.should.not.have.been.called;
+        const smartContactPackageDirExists: boolean = await fs_extra.pathExists(packagesDir);
+        smartContactPackageDirExists.should.be.true;
+    });
+
+    it('should understand the users home directory', async () => {
+        const tildaTestDir: string = '~/test_dir';
+        const homeTestDir: string = homeDir('~/test_dir'.replace('~', ''));
+        await vscode.workspace.getConfiguration().update('fabric.package.directory', tildaTestDir, true);
+
+        const readDirStub = mySandBox.stub(fs_extra, 'readdir');
+        readDirStub.onCall(0).rejects();
+        await blockchainPackageExplorerProvider.getChildren();
+        errorSpy.should.have.been.calledWith('Issue reading smart contract package folder:' + homeTestDir);
+        // Check ~/test_dir isn't created
+        const smartContactPackageDirExists: boolean = await fs_extra.pathExists(tildaTestDir);
+        smartContactPackageDirExists.should.be.false;
+    });
+
+    it('should throw an error if it fails to create the smart contract package directory', async () => {
+        const packagesDir: string = path.join(rootPath, '../../test/data/cake');
+        await vscode.workspace.getConfiguration().update('fabric.package.directory', packagesDir, true);
+
+        const readDirStub = mySandBox.stub(fs_extra, 'readdir');
+        readDirStub.onCall(0).rejects({message : 'no such file or directory'});
+        const mkdirpStub = mySandBox.stub(fs_extra, 'mkdirp');
+        mkdirpStub.onCall(0).rejects();
+        await blockchainPackageExplorerProvider.getChildren();
+        errorSpy.should.have.been.calledWith('Issue creating smart contract package folder:' + packagesDir);
     });
 
     it('should get a tree item in BlockchainPackageExplorer', async () => {
         const packagesDir: string = path.join(rootPath, '../../test/data/smartContractDir');
         await vscode.workspace.getConfiguration().update('fabric.package.directory', packagesDir, true);
 
-        const blockchainPackageExplorerProvider = myExtension.getBlockchainPackageExplorerProvider();
         const testPackages: Array<PackageTreeItem> = await blockchainPackageExplorerProvider.getChildren();
 
         const firstTestPackage: PackageTreeItem = blockchainPackageExplorerProvider.getTreeItem(testPackages[0]) as PackageTreeItem;
-
         firstTestPackage.label.should.equal('smartContractPackageBlue');
         firstTestPackage.tooltip.should.equal('smartContractPackageBlue');
+        errorSpy.should.not.have.been.called;
     });
 });

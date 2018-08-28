@@ -57,6 +57,21 @@ describe('Extension Tests', () => {
         ]);
     });
 
+    it('should check the activation events are correct', async () => {
+        const packageJSON: any = ExtensionUtil.getPackageJSON();
+        const activationEvents: string[] = packageJSON.activationEvents;
+
+        activationEvents.should.deep.equal([
+            'onView:blockchainExplorer',
+            'onCommand:blockchainExplorer.addConnectionEntry',
+            'onCommand:blockchainExplorer.deleteConnectionEntry',
+            'onCommand:blockchainExplorer.addConnectionIdentityEntry',
+            'onCommand:blockchainExplorer.connectEntry',
+            'onCommand:blockchainExplorer.disconnectEntry',
+            'onCommand:blockchain.createSmartContractProjectEntry'
+        ]);
+    });
+
     it('should refresh the tree when a connection is added', async () => {
         await vscode.workspace.getConfiguration().update('fabric.connections', [], vscode.ConfigurationTarget.Global);
 
