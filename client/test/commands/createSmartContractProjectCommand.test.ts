@@ -18,13 +18,12 @@ import * as chai from 'chai';
 import * as sinon from 'sinon';
 import * as tmp from 'tmp';
 import * as sinonChai from 'sinon-chai';
+
 chai.use(sinonChai);
-import * as fs from 'fs';
 import * as fs_extra from 'fs-extra';
-import * as util from 'util';
 import * as child_process from 'child_process';
 import { CommandUtil } from '../../src/util/CommandUtil';
-import { ExtensionUtil } from '../../src/util/ExtensionUtil';
+import { TestUtil } from '../TestUtil';
 
 // Defines a Mocha test suite to group tests of similar kind together
 // tslint:disable no-unused-expression
@@ -39,8 +38,11 @@ describe('CreateSmartContractProjectCommand', () => {
     let uri: vscode.Uri;
     let uriArr: Array<vscode.Uri>;
 
+    before(async () => {
+        await TestUtil.setupTests();
+    });
+
     beforeEach(async () => {
-        await ExtensionUtil.activateExtension();
         mySandBox = sinon.createSandbox();
         sendCommandStub = mySandBox.stub(CommandUtil, 'sendCommand');
         errorSpy = mySandBox.spy(vscode.window, 'showErrorMessage');
@@ -89,7 +91,7 @@ describe('CreateSmartContractProjectCommand', () => {
 
     it('should show error is yo is not installed and not wanted', async () => {
         // yo not installed and not wanted
-        sendCommandStub.onCall(0).rejects({message : 'npm ERR'});
+        sendCommandStub.onCall(0).rejects({message: 'npm ERR'});
         quickPickStub.resolves('no');
         await vscode.commands.executeCommand('blockchain.createSmartContractProjectEntry');
         errorSpy.should.have.been.calledWith('npm modules: yo and generator-fabric are required before creating a smart contract project');
@@ -107,7 +109,7 @@ describe('CreateSmartContractProjectCommand', () => {
 
     it('should show error message if yo fails to install', async () => {
         // yo not installed and wanted but fails to install
-        sendCommandStub.onCall(0).rejects({message : 'npm ERR'});
+        sendCommandStub.onCall(0).rejects({message: 'npm ERR'});
         quickPickStub.resolves('yes');
         sendCommandStub.onCall(1).rejects();
         await vscode.commands.executeCommand('blockchain.createSmartContractProjectEntry');
@@ -116,7 +118,7 @@ describe('CreateSmartContractProjectCommand', () => {
 
     it('should show error message if we fail to create a smart contract', async () => {
         // generator-fabric and yo not installed and wanted
-        sendCommandStub.onCall(0).rejects({message : 'npm ERR'});
+        sendCommandStub.onCall(0).rejects({message: 'npm ERR'});
         quickPickStub.onCall(0).resolves('yes');
         // npm install works
         sendCommandStub.onCall(1).resolves();
@@ -125,7 +127,7 @@ describe('CreateSmartContractProjectCommand', () => {
         const originalSpawn = child_process.spawn;
         const spawnStub: sinon.SinonStub = mySandBox.stub(child_process, 'spawn');
         spawnStub.withArgs('/bin/sh', ['-c', 'yo fabric:chaincode < /dev/null']).callsFake(() => {
-            return originalSpawn('/bin/sh', [ '-c', 'echo blah && echo "  Go" && echo "  JavaScript" && echo "  TypeScript  [45R"']);
+            return originalSpawn('/bin/sh', ['-c', 'echo blah && echo "  Go" && echo "  JavaScript" && echo "  TypeScript  [45R"']);
         });
         quickPickStub.onCall(1).returns('Go');
 
@@ -143,7 +145,7 @@ describe('CreateSmartContractProjectCommand', () => {
         const originalSpawn = child_process.spawn;
         const spawnStub: sinon.SinonStub = mySandBox.stub(child_process, 'spawn');
         spawnStub.withArgs('/bin/sh', ['-c', 'yo fabric:chaincode < /dev/null']).callsFake(() => {
-            return originalSpawn('/bin/sh', [ '-c', 'echo blah && echo "  Go" && echo "  JavaScript" && echo "  TypeScript  [45R"']);
+            return originalSpawn('/bin/sh', ['-c', 'echo blah && echo "  Go" && echo "  JavaScript" && echo "  TypeScript  [45R"']);
         });
         quickPickStub.onCall(0).returns('JavaScript');
 
@@ -162,7 +164,7 @@ describe('CreateSmartContractProjectCommand', () => {
         const originalSpawn = child_process.spawn;
         const spawnStub: sinon.SinonStub = mySandBox.stub(child_process, 'spawn');
         spawnStub.withArgs('/bin/sh', ['-c', 'yo fabric:chaincode < /dev/null']).callsFake(() => {
-            return originalSpawn('/bin/sh', [ '-c', 'echo blah && echo "  Go" && echo "  JavaScript" && echo "  TypeScript  [45R"']);
+            return originalSpawn('/bin/sh', ['-c', 'echo blah && echo "  Go" && echo "  JavaScript" && echo "  TypeScript  [45R"']);
         });
         quickPickStub.onCall(0).returns('Go');
         openDialogStub.resolves(uriArr);
@@ -183,7 +185,7 @@ describe('CreateSmartContractProjectCommand', () => {
         const originalSpawn = child_process.spawn;
         const spawnStub: sinon.SinonStub = mySandBox.stub(child_process, 'spawn');
         spawnStub.withArgs('/bin/sh', ['-c', 'yo fabric:chaincode < /dev/null']).callsFake(() => {
-            return originalSpawn('/bin/sh', [ '-c', 'echo stderr >&2 && false' ]);
+            return originalSpawn('/bin/sh', ['-c', 'echo stderr >&2 && false']);
         });
         openDialogStub.resolves(uriArr);
 
@@ -199,7 +201,7 @@ describe('CreateSmartContractProjectCommand', () => {
         const originalSpawn = child_process.spawn;
         const spawnStub: sinon.SinonStub = mySandBox.stub(child_process, 'spawn');
         spawnStub.withArgs('/bin/sh', ['-c', 'yo fabric:chaincode < /dev/null']).callsFake(() => {
-            return originalSpawn('/bin/sh', [ '-c', 'echo stderr >&2 && true' ]);
+            return originalSpawn('/bin/sh', ['-c', 'echo stderr >&2 && true']);
         });
         openDialogStub.resolves(uriArr);
 
@@ -214,7 +216,7 @@ describe('CreateSmartContractProjectCommand', () => {
         const originalSpawn = child_process.spawn;
         const spawnStub: sinon.SinonStub = mySandBox.stub(child_process, 'spawn');
         spawnStub.withArgs('/bin/sh', ['-c', 'yo fabric:chaincode < /dev/null']).callsFake(() => {
-            return originalSpawn('/bin/sh', [ '-c', 'echo blah && echo "  Go" && echo "  JavaScript" && echo "  TypeScript  [45R"']);
+            return originalSpawn('/bin/sh', ['-c', 'echo blah && echo "  Go" && echo "  JavaScript" && echo "  TypeScript  [45R"']);
         });
         quickPickStub.resolves(undefined);
         await vscode.commands.executeCommand('blockchain.createSmartContractProjectEntry');

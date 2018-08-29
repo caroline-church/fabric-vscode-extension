@@ -19,6 +19,7 @@ import * as sinon from 'sinon';
 
 chai.should();
 
+// tslint:disable no-unused-expression
 describe('VSCodeOutputAdapter', () => {
 
     const outputAdapter: VSCodeOutputAdapter = VSCodeOutputAdapter.instance();
@@ -34,7 +35,7 @@ describe('VSCodeOutputAdapter', () => {
 
     describe('#log', () => {
 
-        it('should log to the console', () => {
+        it('should log to the output channel', () => {
             const outputSpy = sandbox.spy(outputAdapter['outputChannel'], 'appendLine');
             outputAdapter.log('hello world');
             outputSpy.should.have.been.calledOnceWithExactly('hello world');
@@ -42,10 +43,18 @@ describe('VSCodeOutputAdapter', () => {
     });
 
     describe('#error', () => {
-        it('should log to the console', () => {
+        it('should log to the output channel', () => {
             const outputSpy = sandbox.spy(outputAdapter['outputChannel'], 'appendLine');
             outputAdapter.error('hello world');
             outputSpy.should.have.been.calledOnceWithExactly('hello world');
+        });
+    });
+
+    describe('#show', () => {
+        it('should show the output channel', () => {
+            const outputSpy = sandbox.spy(outputAdapter['outputChannel'], 'show');
+            outputAdapter.show();
+            outputSpy.should.have.been.calledOnce;
         });
     });
 });

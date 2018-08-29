@@ -17,7 +17,7 @@ import * as path from 'path';
 import * as chai from 'chai';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
-import { ExtensionUtil } from '../../src/util/ExtensionUtil';
+import { TestUtil } from '../TestUtil';
 import { CommandsUtil } from '../../src/commands/commandsUtil';
 
 chai.use(sinonChai);
@@ -28,9 +28,11 @@ describe('Commands Utility Function Tests', () => {
     let quickPickStub;
     const connections: Array<any> = [];
 
-    beforeEach(async () => {
-        ExtensionUtil.activateExtension();
+    before(async () => {
+        await TestUtil.setupTests();
+    });
 
+    beforeEach(async () => {
         mySandBox = sinon.createSandbox();
 
         const rootPath = path.dirname(__dirname);

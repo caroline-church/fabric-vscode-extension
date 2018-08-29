@@ -28,7 +28,7 @@ import { ConnectionIdentityTreeItem } from '../../src/explorer/model/ConnectionI
 import { FabricRuntimeConnection } from '../../src/fabric/FabricRuntimeConnection';
 import { FabricRuntime } from '../../src/fabric/FabricRuntime';
 import { FabricRuntimeManager } from '../../src/fabric/FabricRuntimeManager';
-import { ExtensionUtil } from '../../src/util/ExtensionUtil';
+import { TestUtil } from '../TestUtil';
 
 chai.should();
 chai.use(sinonChai);
@@ -38,6 +38,10 @@ chai.use(require('chai-as-promised'));
 // tslint:disable no-unused-expression
 describe('ConnectCommand', () => {
 
+    before(async () => {
+        await TestUtil.setupTests();
+    });
+
     describe('connect', () => {
 
         let mySandBox: sinon.SinonSandbox;
@@ -46,8 +50,6 @@ describe('ConnectCommand', () => {
         beforeEach(async () => {
             fabricClientMock = sinon.createStubInstance(fabricClient);
             mySandBox = sinon.createSandbox();
-
-            await ExtensionUtil.activateExtension();
         });
 
         afterEach(async () => {

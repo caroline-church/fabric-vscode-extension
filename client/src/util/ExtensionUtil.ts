@@ -20,6 +20,10 @@ export class ExtensionUtil {
         return this.getExtension().packageJSON;
     }
 
+    public static isActive(): boolean {
+        return this.getExtension().isActive;
+    }
+
     public static activateExtension(): Thenable<void> {
         return this.getExtension().activate();
     }
@@ -27,6 +31,16 @@ export class ExtensionUtil {
     public static getExtensionPath(): string {
         return this.getExtension().extensionPath;
     }
+
+    public static getExtensionContext(): vscode.ExtensionContext {
+        return this.extensionContext;
+    }
+
+    public static setExtensionContext(context: vscode.ExtensionContext): void {
+        this.extensionContext = context;
+    }
+
+    private static extensionContext: vscode.ExtensionContext;
 
     private static getExtension(): vscode.Extension<any> {
         return vscode.extensions.getExtension('IBM.ibm-blockchain');
