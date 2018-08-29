@@ -15,6 +15,7 @@
 import * as vscode from 'vscode';
 import { BlockchainTreeItem } from '../../../src/explorer/model/BlockchainTreeItem';
 import { getBlockchainNetworkExplorerProvider } from '../../../src/extension';
+import { TestUtil } from '../../TestUtil';
 
 import * as chai from 'chai';
 import * as sinon from 'sinon';
@@ -28,7 +29,6 @@ describe('BlockchainTreeItem', () => {
         constructor() {
             super(getBlockchainNetworkExplorerProvider(), 'test label', vscode.TreeItemCollapsibleState.None);
         }
-
     }
 
     let sandbox: sinon.SinonSandbox;
@@ -48,7 +48,6 @@ describe('BlockchainTreeItem', () => {
         it('should have the tooltip', () => {
             treeItem.tooltip.should.equal('test label');
         });
-
     });
 
     describe('#refresh', () => {
@@ -59,7 +58,5 @@ describe('BlockchainTreeItem', () => {
             treeItem.refresh();
             refreshStub.should.have.been.calledOnceWithExactly(treeItem);
         });
-
     });
-
 });

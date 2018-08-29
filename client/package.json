@@ -25,13 +25,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onView:blockchainExplorer",
-    "onCommand:blockchainExplorer.addConnectionEntry",
-    "onCommand:blockchainExplorer.deleteConnectionEntry",
-    "onCommand:blockchainExplorer.addConnectionIdentityEntry",
-    "onCommand:blockchainExplorer.connectEntry",
-    "onCommand:blockchainExplorer.disconnectEntry",
-    "onCommand:blockchain.createSmartContractProjectEntry"
+      "*"
   ],
   "main": "./out/src/extension",
   "contributes": {

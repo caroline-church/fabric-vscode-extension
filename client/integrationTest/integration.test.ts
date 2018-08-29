@@ -34,7 +34,8 @@ describe('Integration Test', () => {
     let keyPath: string;
     let certPath: string;
 
-    beforeEach(async () => {
+    before(async function() {
+        this.timeout(600000);
         mySandBox = sinon.createSandbox();
         keyPath = path.join(__dirname, `../../integrationTest/hlfv1/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/key.pem`);
         certPath = path.join(__dirname, `../../integrationTest/hlfv1/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem`);

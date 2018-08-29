@@ -39,4 +39,8 @@ export class VSCodeOutputAdapter implements OutputAdapter {
         this.outputChannel.appendLine(value);
     }
 
+    show() {
+        this.outputChannel.show();
+    }
+
 }

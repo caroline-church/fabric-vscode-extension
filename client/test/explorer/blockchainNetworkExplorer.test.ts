@@ -22,7 +22,6 @@ import * as sinonChai from 'sinon-chai';
 import { ConnectionTreeItem } from '../../src/explorer/model/ConnectionTreeItem';
 import { ConnectionIdentityTreeItem } from '../../src/explorer/model/ConnectionIdentityTreeItem';
 import { AddConnectionTreeItem } from '../../src/explorer/model/AddConnectionTreeItem';
-import { FabricClientConnection } from '../../src/fabric/FabricClientConnection';
 import { FabricConnection } from '../../src/fabric/FabricConnection';
 import { BlockchainTreeItem } from '../../src/explorer/model/BlockchainTreeItem';
 import { BlockchainNetworkExplorerProvider } from '../../src/explorer/BlockchainNetworkExplorer';
@@ -33,9 +32,9 @@ import { PeerTreeItem } from '../../src/explorer/model/PeerTreeItem';
 import { ChainCodeTreeItem } from '../../src/explorer/model/ChainCodeTreeItem';
 import { InstalledChainCodeTreeItem } from '../../src/explorer/model/InstalledChainCodeTreeItem';
 import { InstalledChainCodeVersionTreeItem } from '../../src/explorer/model/InstalledChaincodeVersionTreeItem';
-import { FabricConnectionFactory } from '../../src/fabric/FabricConnectionFactory';
 import { FabricConnectionManager } from '../../src/fabric/FabricConnectionManager';
 import { ExtensionUtil } from '../../src/util/ExtensionUtil';
+import { TestUtil } from '../TestUtil';
 
 chai.use(sinonChai);
 const should = chai.should();
@@ -45,11 +44,14 @@ class TestFabricConnection extends FabricConnection {
     async connect(): Promise<void> {
         return;
     }
-
 }
 
 // tslint:disable no-unused-expression
 describe('BlockchainNetworkExplorer', () => {
+
+    before(async () => {
+        await TestUtil.setupTests();
+    });
 
     describe('constructor', () => {
 
@@ -57,8 +59,6 @@ describe('BlockchainNetworkExplorer', () => {
 
         beforeEach(async () => {
             mySandBox = sinon.createSandbox();
-
-            await ExtensionUtil.activateExtension();
         });
 
         afterEach(() => {

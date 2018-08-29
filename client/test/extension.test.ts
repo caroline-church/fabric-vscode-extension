@@ -19,6 +19,10 @@ import * as chai from 'chai';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { ExtensionUtil } from '../src/util/ExtensionUtil';
+import { DependencyManager } from '../src/dependencies/DependencyManager';
+import { VSCodeOutputAdapter } from '../src/logging/VSCodeOutputAdapter';
+import { TemporaryCommandRegistry } from '../src/dependencies/TemporaryCommandRegistry';
+import { TestUtil } from './TestUtil';
 
 chai.should();
 chai.use(sinonChai);
@@ -28,10 +32,12 @@ describe('Extension Tests', () => {
 
     let mySandBox;
 
+    before(async () => {
+        await TestUtil.setupTests();
+    });
+
     beforeEach(async () => {
         mySandBox = sinon.createSandbox();
-
-        await ExtensionUtil.activateExtension();
     });
 
     afterEach(() => {
@@ -68,7 +74,10 @@ describe('Extension Tests', () => {
             'onCommand:blockchainExplorer.addConnectionIdentityEntry',
             'onCommand:blockchainExplorer.connectEntry',
             'onCommand:blockchainExplorer.disconnectEntry',
-            'onCommand:blockchain.createSmartContractProjectEntry'
+            'onCommand:blockchainExplorer.refreshEntry',
+            'onCommand:blockchain.createSmartContractProjectEntry',
+            'onCommand:blockchainAPackageExplorer.refreshEntry',
+            'onCommand:blockchainAPackageExplorer.packageSmartContractProject',
         ]);
     });
 
@@ -110,5 +119,66 @@ describe('Extension Tests', () => {
         await vscode.workspace.getConfiguration().update('fabric.runtimes', [myRuntime], vscode.ConfigurationTarget.Global);
 
         treeSpy.should.have.been.called;
+    });
+
+    it('should install native dependencies on first activation', async () => {
+        const dependencyManager = DependencyManager.instance();
+        mySandBox.stub(vscode.commands, 'registerCommand');
+        mySandBox.stub(dependencyManager, 'hasNativeDependenciesInstalled').returns(false);
+        const installStub = mySandBox.stub(dependencyManager, 'installNativeDependencies').resolves();
+        const tempRegistryExecuteStub = mySandBox.stub(TemporaryCommandRegistry.instance(), 'executeStoredCommands');
+
+        const context: vscode.ExtensionContext = ExtensionUtil.getExtensionContext();
+        await myExtension.activate(context);
+        installStub.should.have.been.called;
+        tempRegistryExecuteStub.should.have.been.called;
+    });
+
+    it('should not install native dependencies if already installed', async () => {
+        const dependencyManager = DependencyManager.instance();
+        mySandBox.stub(vscode.commands, 'registerCommand');
+        mySandBox.stub(dependencyManager, 'hasNativeDependenciesInstalled').returns(true);
+        const installStub = mySandBox.stub(dependencyManager, 'installNativeDependencies').resolves();
+
+        const context: vscode.ExtensionContext = ExtensionUtil.getExtensionContext();
+        await myExtension.activate(context);
+        installStub.should.not.have.been.called;
+    });
+
+    it('should handle any errors', async () => {
+        const dependencyManager = DependencyManager.instance();
+
+        const showErrorStub = mySandBox.stub(vscode.window, 'showErrorMessage').resolves();
+        mySandBox.stub(vscode.commands, 'registerCommand');
+        mySandBox.stub(dependencyManager, 'hasNativeDependenciesInstalled').returns(false);
+        mySandBox.stub(dependencyManager, 'installNativeDependencies').rejects({message: 'some error'});
+
+        const context: vscode.ExtensionContext = ExtensionUtil.getExtensionContext();
+        await myExtension.activate(context);
+
+        showErrorStub.should.have.been.calledWith('Failed to activate extension', 'open output view');
+    });
+
+    it('should handle any errors and show output log', async () => {
+        const dependencyManager = DependencyManager.instance();
+
+        const showErrorStub = mySandBox.stub(vscode.window, 'showErrorMessage').resolves('open output view');
+        const outputAdapterSpy = mySandBox.spy(VSCodeOutputAdapter.instance(), 'show');
+        mySandBox.stub(vscode.commands, 'registerCommand');
+        mySandBox.stub(dependencyManager, 'hasNativeDependenciesInstalled').returns(false);
+        mySandBox.stub(dependencyManager, 'installNativeDependencies').rejects({message: 'some error'});
+
+        const context: vscode.ExtensionContext = ExtensionUtil.getExtensionContext();
+        await myExtension.activate(context);
+
+        showErrorStub.should.have.been.calledWith('Failed to activate extension', 'open output view');
+
+        outputAdapterSpy.should.have.been.called;
+    });
+
+    it('should deactivate extension', async () => {
+        myExtension.deactivate();
+
+        await vscode.commands.executeCommand('blockchain.refreshEntry').should.be.rejectedWith(`command 'blockchain.refreshEntry' not found`);
     });
 });
