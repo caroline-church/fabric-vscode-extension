@@ -20,9 +20,30 @@ before_install:
      - npm install -g yo
      - npm install -g generator-fabric
 install: |
-      ./.travis/install.sh
+     - cd ./client
+     - npm install
+     - npm run compile
 script: |
-      ./.travis/script.sh
+     - cd ./client
+
+     - if [ "${TASK}" == "systest" ]; then
+        ./integrationTest/scripts/run-integration-tests.sh
+     else
+        node ./node_modules/.bin/electron-rebuild -v 2.0
+
+        - if [ $TRAVIS_OS_NAME == "linux" ]; then
+          rm -rf ./node_modules/grpc/src/node/extension_binary/node-v57-linux-x64-glibc
+          mv ./node_modules/grpc/src/node/extension_binary/electron-v2.0-linux-x64-glibc ./node_modules/grpc/src/node/extension_binary/node-v57-linux-x64-glibc
+        else
+          rm -rf ./node_modules/grpc/src/node/extension_binary/node-v57-darwin-x64-unknown
+          mv ./node_modules/grpc/src/node/extension_binary/electron-v2.0-darwin-x64-unknown ./node_modules/grpc/src/node/extension_binary/node-v57-darwin-x64-unknown
+        fi
+
+        #update package json so that the tests work
+        - node ../.travis/rewritePackageJson.js
+
+        - npm test
+    fi
 #deploy:
 #     provider: script
 #     script: ./.travis/deploy.sh

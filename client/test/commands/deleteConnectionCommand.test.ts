@@ -21,12 +21,16 @@ import * as sinonChai from 'sinon-chai';
 
 import * as myExtension from '../../src/extension';
 import { BlockchainTreeItem } from '../../src/explorer/model/BlockchainTreeItem';
-import { ExtensionUtil } from '../../src/util/ExtensionUtil';
+import { TestUtil } from '../TestUtil';
 
 chai.should();
 chai.use(sinonChai);
 
 describe('DeleteConnectionCommand', () => {
+
+    before(async () => {
+        await TestUtil.setupTests();
+    });
 
     describe('deleteConnection', () => {
 
@@ -34,8 +38,6 @@ describe('DeleteConnectionCommand', () => {
 
         beforeEach(async () => {
             mySandBox = sinon.createSandbox();
-
-            await ExtensionUtil.activateExtension();
         });
 
         afterEach(() => {
