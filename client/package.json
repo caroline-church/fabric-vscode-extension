@@ -12,7 +12,7 @@
   "license": "Apache-2.0",
   "version": "0.19.8",
   "publisher": "IBM",
-  "icon": "icon.png",
+  "icon": "media/blockchain_marketplace.png",
   "engines": {
     "vscode": "^1.26.0"
   },
@@ -40,7 +40,7 @@
         {
           "id": "blockchain-explorer",
           "title": "Blockchain Explorer",
-          "icon": "media/conga.png"
+          "icon": "media/blockchain_activitybar.svg"
         }
       ]
     },
