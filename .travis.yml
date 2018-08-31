@@ -1,4 +1,4 @@
-sudo: required
+sudo: false
 
 matrix:
   include:
@@ -6,6 +6,11 @@ matrix:
       env: TASK=systest
     - os: linux
       env: TASK=unit
+    - os: osx
+      env: TASK=unit
+      language: node_js
+      node_js:
+      - "lts/*"
 
 before_install:
      - if [ $TRAVIS_OS_NAME == "linux" ]; then
