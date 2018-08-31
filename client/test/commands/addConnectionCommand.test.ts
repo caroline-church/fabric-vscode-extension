@@ -18,7 +18,8 @@ import * as path from 'path';
 import * as chai from 'chai';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
-import { ExtensionUtil } from '../../src/util/ExtensionUtil';
+
+import {TestUtil} from '../TestUtil';
 
 chai.should();
 chai.use(sinonChai);
@@ -26,12 +27,14 @@ chai.use(sinonChai);
 describe('AddConnectionCommand', () => {
     let mySandBox;
 
+    before(async () => {
+        await TestUtil.setupTests();
+    });
+
     describe('addConnection', () => {
 
         beforeEach(async () => {
             mySandBox = sinon.createSandbox();
-
-            await ExtensionUtil.activateExtension();
         });
 
         afterEach(() => {

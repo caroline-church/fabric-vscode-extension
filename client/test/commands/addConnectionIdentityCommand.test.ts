@@ -20,19 +20,22 @@ import * as chai from 'chai';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { BlockchainTreeItem } from '../../src/explorer/model/BlockchainTreeItem';
-import { ExtensionUtil } from '../../src/util/ExtensionUtil';
+import { TestUtil } from '../TestUtil';
 
 chai.should();
 chai.use(sinonChai);
 
 describe('AddConnectionIdentityCommand', () => {
 
+    before(async () => {
+        await TestUtil.setupTests();
+    });
+
     describe('addConnectionIdentity', () => {
         let mySandBox;
 
         beforeEach(async () => {
             mySandBox = sinon.createSandbox();
-            await ExtensionUtil.activateExtension();
         });
 
         afterEach(() => {

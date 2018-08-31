@@ -21,6 +21,7 @@ import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { PackageTreeItem } from '../../src/explorer/model/PackageTreeItem';
 import { ExtensionUtil } from '../../src/util/ExtensionUtil';
+import { TestUtil } from '../TestUtil';
 import * as fs_extra from 'fs-extra';
 import * as homeDir from 'home-dir';
 import * as tmp from 'tmp';
@@ -36,14 +37,16 @@ describe('BlockchainPackageExplorer', () => {
     let blockchainPackageExplorerProvider;
     let infoSpy;
 
+    before(async () => {
+        await TestUtil.setupTests();
+    });
+
     beforeEach(async () => {
         mySandBox = sinon.createSandbox();
         rootPath = path.dirname(__dirname);
         errorSpy = mySandBox.spy(vscode.window, 'showErrorMessage');
         infoSpy = mySandBox.spy(vscode.window, 'showInformationMessage');
         blockchainPackageExplorerProvider = myExtension.getBlockchainPackageExplorerProvider();
-
-        await ExtensionUtil.activateExtension();
     });
 
     afterEach(() => {
@@ -105,7 +108,7 @@ describe('BlockchainPackageExplorer', () => {
         await vscode.workspace.getConfiguration().update('fabric.package.directory', packagesDir, true);
 
         const readDirStub = mySandBox.stub(fs_extra, 'readdir');
-        readDirStub.onCall(0).rejects({message : 'no such file or directory'});
+        readDirStub.onCall(0).rejects({message: 'no such file or directory'});
         const mkdirpStub = mySandBox.stub(fs_extra, 'mkdirp');
         mkdirpStub.onCall(0).rejects();
         await blockchainPackageExplorerProvider.getChildren();
