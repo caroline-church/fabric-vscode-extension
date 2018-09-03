@@ -19,6 +19,10 @@ console.log("rewriting package json");
 
 const packageJson = JSON.parse(fs.readFileSync('./package.json'));
 
+if(packageJson.activationEvents.length > 1) {
+  throw new Error('Activation events should be * when checked in');
+}
+
 packageJson.activationEvents = [];
 
 packageJson.actualActivationEvents.onView.forEach((event) => {
